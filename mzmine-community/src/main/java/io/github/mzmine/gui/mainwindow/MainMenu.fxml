@@ -434,6 +434,9 @@
       <MenuItem text="Retention time correction"
         onAction="#runModule"
         userData="io.github.mzmine.modules.dataprocessing.norm_rtcalibration.RTCorrectionModule"/>
+      <MenuItem text="Kovats retention index calculation"
+        onAction="#runModule"
+        userData="io.github.mzmine.modules.dataprocessing.norm_ri.RICalculationModule"/>
       <MenuItem text="Linear normalizer" onAction="#runModule"
         userData="io.github.mzmine.modules.dataprocessing.norm_linear.LinearNormalizerModule"/>
       <MenuItem text="Standard compound normalizer"
