@@ -77,7 +77,7 @@ public class RIType extends FloatType {
   @Override
   public List<RowBinding> createDefaultRowBindings() {
     return List.of(
-      new SimpleRowBinding(this, BindingsType.LIST)
+      new SimpleRowBinding(this, BindingsType.AVERAGE)
     );
   }
 
