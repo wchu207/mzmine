@@ -43,7 +43,7 @@ import java.util.Arrays;
 import java.util.List;
 
 /**
- * Retention time type
+ * Retention index type
  */
 public class RIType extends FloatType {
 

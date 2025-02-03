@@ -66,7 +66,7 @@ import io.github.mzmine.datamodel.features.types.numbers.abstr.IntegerType;
 import io.github.mzmine.main.MZmineCore;
 import io.github.mzmine.util.MathUtils;
 import io.github.mzmine.util.ParsingUtils;
-import io.github.mzmine.util.RIRecordNIST;
+import io.github.mzmine.util.RIRecord;
 import io.github.mzmine.util.collections.IndexRange;
 import io.github.mzmine.util.io.JsonUtils;
 import it.unimi.dsi.fastutil.floats.FloatArrayList;
@@ -107,8 +107,7 @@ public enum DBEntryField {
   FEATURELIST_NAME_FEATURE_ID,
 
   // spectrum specific
-  // TODO: RIRecord for other formats if they differ
-  MS_LEVEL, RT(Float.class), RI(RIRecordNIST.class), CCS(Float.class), ION_TYPE, PRECURSOR_MZ(Double.class), CHARGE(
+  MS_LEVEL, RT(Float.class), RI(RIRecord.class), CCS(Float.class), ION_TYPE, PRECURSOR_MZ(Double.class), CHARGE(
       Integer.class), // height of feature
   FEATURE_MS1_HEIGHT(Float.class), FEATURE_MS1_REL_HEIGHT(Float.class),
 
@@ -730,9 +729,8 @@ public enum DBEntryField {
       return new FloatArrayList(floats);
     }
 
-    if (getObjectClass().equals(RIRecordNIST.class)) {
-      // TODO: unclear if other library formats have different formats for RIs
-      return RIRecordNIST.parse(content);
+    if (getObjectClass().equals(RIRecord.class)) {
+      return new RIRecord(content);
     }
     // TODO currently we can only parse this as list of strings - should be either json list or java object list
     // FloatArrayList IntArrayList and other specialized classes help to load numbers
