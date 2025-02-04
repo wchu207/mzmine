@@ -26,80 +26,44 @@
 package io.github.mzmine.datamodel.features.types.numbers;
 
 import com.google.common.collect.Range;
-import io.github.mzmine.datamodel.MobilityType;
 import io.github.mzmine.datamodel.features.ModularDataModel;
 import io.github.mzmine.datamodel.features.RowBinding;
 import io.github.mzmine.datamodel.features.SimpleRowBinding;
-import io.github.mzmine.datamodel.features.types.DataType;
 import io.github.mzmine.datamodel.features.types.modifiers.BindingsType;
-import io.github.mzmine.datamodel.features.types.modifiers.ExpandableType;
-import io.github.mzmine.datamodel.features.types.numbers.abstr.FloatType;
 import io.github.mzmine.datamodel.features.types.numbers.abstr.IntegerType;
 import org.jetbrains.annotations.NotNull;
 
-import java.text.DecimalFormat;
 import java.text.NumberFormat;
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
+import static io.github.mzmine.datamodel.features.types.DataTypes.get;
 import static io.github.mzmine.datamodel.features.types.modifiers.BindingsType.*;
-import static io.github.mzmine.datamodel.features.types.modifiers.BindingsType.MIN;
 
 /**
  * Retention index type
  * This is frequently rounded, because everyone uses rounded versions
  * Rounding is therefore necessary for the endpoints of ranges to be placed at integer values
  */
-public class RIType extends IntegerType {
+public class RIDiffType extends RIType {
 
   @NotNull
   @Override
   public String getUniqueID() {
     // Never change the ID for compatibility during saving/loading of type
-    return "ri";
-  }
-
-  @Override
-  public NumberFormat getFormat() {
-      return DEFAULT_FORMAT;
-  }
-
-  @Override
-  public NumberFormat getExportFormat() {
-      return DEFAULT_FORMAT;
+    return "ri_diff";
   }
 
   @Override
   public @NotNull String getHeaderString() {
-    return "RI";
+    return "RI range";
   }
 
   @NotNull
   @Override
   public List<RowBinding> createDefaultRowBindings() {
     return List.of(
-      new SimpleRowBinding(this, AVERAGE)
+        new SimpleRowBinding(this, get(RIType.class), RANGE)
     );
   }
 
-  @Override
-  public boolean getDefaultVisibility() {
-    return true;
-  }
-
-  @Override
-  public Object evaluateBindings(@NotNull BindingsType bindingsType, @NotNull List <? extends ModularDataModel> models) {
-    switch (bindingsType) {
-      case AVERAGE:
-        Double mean = (Double) super.evaluateBindings(AVERAGE, models);
-        return mean != null ? (int) Math.round(mean) : null;
-      case RANGE:
-        Integer max = (Integer) evaluateBindings(MAX, models);
-        Integer min = (Integer) evaluateBindings(MIN, models);
-        return (max != null && min != null) ? max - min : null;
-      default:
-        return super.evaluateBindings(bindingsType, models);
-    }
-  }
 }

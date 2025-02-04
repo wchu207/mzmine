@@ -41,7 +41,7 @@ import java.text.NumberFormat;
 public class RIToleranceComponent extends HBox {
 
   private final ObservableList<RIColumn> toleranceTypes;
-  private final NumberFormat format = MZmineCore.getConfiguration().getRTFormat();
+  private final NumberFormat format = NumberFormat.getIntegerInstance();
   private final TextFormatter<Number> textFormatter = new TextFormatter<>(
       new NumberStringConverter(format));
   private final TextField toleranceField;
@@ -53,7 +53,6 @@ public class RIToleranceComponent extends HBox {
 
     setSpacing(5);
     toleranceField = new TextField();
-    toleranceField.setPrefColumnCount(6);
     toleranceField.setTextFormatter(textFormatter);
 
     toleranceType = new ComboBox<>(toleranceTypes);
@@ -70,14 +69,14 @@ public class RIToleranceComponent extends HBox {
     String valueString = toleranceField.getText();
     boolean ignoreWithoutRI = shouldIgnoreWithoutRICheckBox.isSelected();
 
-    Float toleranceFloat;
+    Integer tolerance = null;
     try {
-        toleranceFloat = Float.parseFloat(valueString);
+        tolerance = Integer.parseInt(valueString);
     } catch (Exception e) {
       return null;
     }
 
-    return new RITolerance(toleranceFloat, selectedColumnType, ignoreWithoutRI);
+    return new RITolerance(tolerance, selectedColumnType, ignoreWithoutRI);
   }
 
   public void setValue(@Nullable RITolerance value) {
@@ -88,7 +87,7 @@ public class RIToleranceComponent extends HBox {
       return;
     }
 
-    double tolerance = value.getTolerance();
+    int tolerance = value.getTolerance();
     RIColumn selectedColumnType = value.getColumn();
     boolean ignoreWithoutRI = value.shouldIgnoreWithoutRI();
 

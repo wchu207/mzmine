@@ -37,17 +37,17 @@ import io.github.mzmine.util.RIRecord;
  */
 public class RITolerance {
 
-  private final float tolerance;
+  private final int tolerance;
   private final RIColumn column;
   private final boolean ignoreWithoutRI;
 
-  public RITolerance(final float rtTolerance, RIColumn type, boolean ignoreWithoutRI) {
+  public RITolerance(final int rtTolerance, RIColumn type, boolean ignoreWithoutRI) {
     this.tolerance = rtTolerance;
     this.column = type;
     this.ignoreWithoutRI = ignoreWithoutRI;
   }
 
-  public float getTolerance() {
+  public int getTolerance() {
     return tolerance;
   }
 
@@ -59,7 +59,7 @@ public class RITolerance {
     return ignoreWithoutRI;
   }
 
-  public Range<Float> getToleranceRange(final float riValue) {
+  public Range<Integer> getToleranceRange(final Integer riValue) {
     // rtValue is given in minutes
     return Range.closed(riValue - tolerance, riValue + tolerance);
   }
@@ -68,11 +68,11 @@ public class RITolerance {
     return ignoreWithoutRI && (libRI == null || libRI.getRI(column) == null);
   }
 
-  public boolean checkWithinTolerance(Float ri, RIRecord libRI) {
+  public boolean checkWithinTolerance(Integer ri, RIRecord libRI) {
     return libRI == null || libRI.getRI(column) == null || getToleranceRange(libRI.getRI(column)).contains(ri);
   }
 
-  public boolean checkWithinTolerance(final float ri1, final float ri2) {
+  public boolean checkWithinTolerance(final int ri1, final int ri2) {
     return getToleranceRange(ri1).contains(ri2);
   }
 

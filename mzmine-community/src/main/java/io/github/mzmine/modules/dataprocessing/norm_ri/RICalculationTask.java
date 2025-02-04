@@ -32,6 +32,9 @@ import io.github.mzmine.datamodel.features.ModularFeature;
 import io.github.mzmine.datamodel.features.FeatureList;
 import io.github.mzmine.datamodel.features.ModularFeatureList;
 import io.github.mzmine.datamodel.features.types.annotations.RIScaleType;
+import io.github.mzmine.datamodel.features.types.numbers.RIMinType;
+import io.github.mzmine.datamodel.features.types.numbers.RIMaxType;
+import io.github.mzmine.datamodel.features.types.numbers.RIDiffType;
 import io.github.mzmine.datamodel.features.types.numbers.RIType;
 import io.github.mzmine.datamodel.features.types.numbers.RTType;
 import io.github.mzmine.modules.MZmineModule;
@@ -154,6 +157,9 @@ public class RICalculationTask extends AbstractFeatureListTask {
       ModularFeatureList outputList = featureList.createCopy(featureList.getName() + " with retention index", null, false);
 
       outputList.addFeatureType(new RIType());
+      outputList.addFeatureType(new RIMaxType());
+      outputList.addFeatureType(new RIMinType());
+      outputList.addFeatureType(new RIDiffType());
       outputList.addFeatureType(new RIScaleType());
 
 
@@ -179,22 +185,22 @@ public class RICalculationTask extends AbstractFeatureListTask {
       return;
     }
 
-    Float ri = null;
+    Integer ri = null;
     boolean hasRI = false;
     double[] knots = riScale.interpolator.getKnots();
 
     if (rt >= knots[0] && rt <= knots[knots.length - 1]) {
-      ri = (float) riScale.interpolator.value(rt);
+      ri = Math.toIntExact(Math.round(riScale.interpolator.value(rt)));
       hasRI = true;
     }
 
     else if (shouldExtrapolate && rt > knots[knots.length - 1]) {
-      ri = (float) riScale.interpolator.getPolynomials()[riScale.interpolator.getPolynomials().length - 1].value(rt - knots[knots.length - 1]);
+      ri = Math.toIntExact(Math.round(riScale.interpolator.getPolynomials()[riScale.interpolator.getPolynomials().length - 1].value(rt - knots[knots.length - 1])));
       hasRI = true;
     }
 
     else if (shouldExtrapolate && rt < knots[0]) {
-      ri = (float) riScale.interpolator.getPolynomials()[0].value(rt - knots[0]);
+      ri = Math.toIntExact(Math.round(riScale.interpolator.getPolynomials()[0].value(rt - knots[0])));
       hasRI = true;
     }
 

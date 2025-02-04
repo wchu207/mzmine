@@ -160,7 +160,7 @@ public class RIToleranceParameter implements UserParameter<RITolerance, RITolera
     if (toleranceNum.length() == 0) {
       return;
     }
-    float tolerance = (float) Double.parseDouble(toleranceNum);
+    int tolerance = Integer.parseInt(toleranceNum);
     this.value = new RITolerance(tolerance, columnType, ignoreWithoutRI);
   }
 
@@ -171,7 +171,7 @@ public class RIToleranceParameter implements UserParameter<RITolerance, RITolera
     }
     xmlElement.setAttribute("columnType", value.getColumn().name());
     xmlElement.setAttribute("ignoreWithoutRI", Boolean.toString(value.shouldIgnoreWithoutRI()));
-    float tolerance = (float) value.getTolerance();
+    int tolerance = value.getTolerance();
     String toleranceNum = String.valueOf(tolerance);
     xmlElement.setTextContent(toleranceNum);
   }
@@ -182,9 +182,9 @@ public class RIToleranceParameter implements UserParameter<RITolerance, RITolera
       errorMessages.add(name + " is not set properly");
       return false;
     }
-    double tolerance = value.getTolerance();
-    if (tolerance < 0) {
-      errorMessages.add("Invalid retention time tolerance value.");
+    int tolerance = value.getTolerance();
+    if (tolerance <= 0) {
+      errorMessages.add("Invalid retention index tolerance value.");
       return false;
 
     }

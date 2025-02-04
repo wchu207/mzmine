@@ -155,7 +155,7 @@ public interface Scan extends MassSpectrum, Comparable<Scan> {
   /**
    * @return Retention time of this scan, if it exists
    */
-  default Float getRetentionIndex() { return null; }
+  default Integer getRetentionIndex() { return null; }
 
   /**
    * @return The injection time of this scan or null.

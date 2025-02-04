@@ -26,8 +26,11 @@
 package io.github.mzmine.util;
 
 import java.util.EnumMap;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.logging.Logger;
+
+import static java.util.Map.entry;
 
 
 // This holds information from the RI field in NIST libraries for gas chromatography
@@ -42,6 +45,15 @@ public class RIRecord
 {
     private static final Logger logger = Logger.getLogger(RIRecord.class.getName());
     private Map<RIColumn, RIRecordPart> map;
+    static private final Map<String, RIColumn> stringsToColumnTypesMap = Map.ofEntries(
+        entry("s=", RIColumn.SEMIPOLAR),
+        entry("SemiStdNP=", RIColumn.SEMIPOLAR),
+        entry("n=", RIColumn.NONPOLAR),
+        entry("StdNP=", RIColumn.NONPOLAR),
+        entry("p=", RIColumn.POLAR),
+        entry("Polar=", RIColumn.POLAR),
+        entry("a=", RIColumn.DEFAULT)
+    );
 
     public RIRecord(Map<RIColumn, RIRecordPart> map) {
         this.map = map;
@@ -56,9 +68,9 @@ public class RIRecord
         boolean hasPrev = false;
 
         if (map.containsKey(RIColumn.SEMIPOLAR)) {
-            Float s_ri = map.get(RIColumn.SEMIPOLAR).ri();
+            Integer s_ri = map.get(RIColumn.SEMIPOLAR).ri();
             Integer s_count = map.get(RIColumn.SEMIPOLAR).count();
-            Float s_ci = map.get(RIColumn.SEMIPOLAR).ci();
+            Integer s_ci = map.get(RIColumn.SEMIPOLAR).ci();
 
             // s_ri != null should always be true
             sb.append(s_ri != null ? String.format("s=%d", Math.round(s_ri)) : "");
@@ -67,15 +79,28 @@ public class RIRecord
         }
 
         if (map.containsKey(RIColumn.NONPOLAR)) {
-            Float n_ri = map.get(RIColumn.NONPOLAR).ri();
+            Integer n_ri = map.get(RIColumn.NONPOLAR).ri();
             Integer n_count = map.get(RIColumn.NONPOLAR).count();
-            Float n_ci = map.get(RIColumn.NONPOLAR).ci();
+            Integer n_ci = map.get(RIColumn.NONPOLAR).ci();
 
             // n_ri != null should always be true
-            sb.append(hasPrev && map.get(RIColumn.SEMIPOLAR).ri() != null && n_ri != null ? " " : "");
+            sb.append(hasPrev && n_ri != null ? " " : "");
             sb.append(n_ri != null ? String.format("n=%d", Math.round(n_ri)) : "");
             sb.append((n_ri != null && n_count != null && n_ci != null) ? String.format("/%d/%d", n_count, Math.round(n_ci)) : "");
             hasPrev = hasPrev || n_ri != null;
+        }
+
+
+        if (map.containsKey(RIColumn.POLAR)) {
+            Integer p_ri = map.get(RIColumn.POLAR).ri();
+            Integer p_count = map.get(RIColumn.POLAR).count();
+            Integer p_ci = map.get(RIColumn.POLAR).ci();
+
+            // n_ri != null should always be true
+            sb.append(hasPrev && p_ri != null ? " " : "");
+            sb.append(p_ri != null ? String.format("n=%d", Math.round(p_ri)) : "");
+            sb.append((p_ri != null && p_count != null && p_ci != null) ? String.format("/%d/%d", p_count, Math.round(p_ci)) : "");
+            hasPrev = hasPrev || p_ri != null;
         }
 
         return sb.toString();
@@ -86,30 +111,33 @@ public class RIRecord
         Map<RIColumn, RIRecordPart> recordsMap = new EnumMap<>(RIColumn.class);
 
         for(String record : records) {
-            boolean isSingleValue = false;
             try {
-                Float.parseFloat(record);
-                recordsMap.put(RIColumn.DEFAULT, new RIRecordPart(Float.parseFloat(record), null, null));
+                Integer.parseInt(record);
+                recordsMap.put(RIColumn.DEFAULT, new RIRecordPart(Integer.parseInt(record), null, null));
             } catch (NumberFormatException ne)  {
+                String discoveredKey = null;
                 RIColumn currentType = null;
-                if (record.startsWith("a=")) {
-                    currentType = RIColumn.DEFAULT;
-                }
-                else if (record.startsWith("s=")) {
-                    currentType = RIColumn.SEMIPOLAR;
-                } else if (record.startsWith("n=")) {
-                    currentType = RIColumn.NONPOLAR;
-                } else if (record.startsWith("p=")) {
-                    currentType = RIColumn.POLAR;
+
+                for (Map.Entry<String, RIColumn> entry : stringsToColumnTypesMap.entrySet()) {
+                    String key = entry.getKey();
+                    // Converting keys to lower-case is slower but the map is more readable
+                    if(record.toLowerCase().startsWith(key.toLowerCase())) {
+                        discoveredKey = key;
+                        currentType = entry.getValue();
+                        break;
+                    }
+
                 }
 
-                String[] recordValues = record.substring(2).split("/");
-                if (currentType != null && recordValues.length > 0) {
+                if (discoveredKey != null) {
                     try {
-                        recordsMap.put(currentType, new RIRecordPart(
-                                recordValues[0] != null ? Float.parseFloat(recordValues[0]) : null,
+                        String[] recordValues = record.substring(discoveredKey.length()).split("/");
+                        if (recordValues.length > 0) {
+                            recordsMap.put(currentType, new RIRecordPart(
+                                recordValues[0] != null ? Integer.parseInt(recordValues[0]) : null,
                                 recordValues.length > 2 && recordValues[1] != null && recordValues[2] != null ? Integer.parseInt(recordValues[1]) : null,
-                                recordValues.length > 2 && recordValues[1] != null && recordValues[2] != null ? Float.parseFloat(recordValues[2]) : null));
+                                recordValues.length > 2 && recordValues[1] != null && recordValues[2] != null ? Integer.parseInt(recordValues[2]) : null));
+                        }
                     } catch (Exception e) {
                         logger.warning("Failed to parse RI record: " + line);
                     }
@@ -125,7 +153,7 @@ public class RIRecord
         return recordsMap;
     }
 
-    public Float getRI(RIColumn type) {
+    public Integer getRI(RIColumn type) {
         if (map.containsKey(type)) {
             return map.get(type).ri();
         }
@@ -137,7 +165,7 @@ public class RIRecord
         }
     }
 
-    protected record RIRecordPart(Float ri, Integer count, Float ci) {
+    protected record RIRecordPart(Integer ri, Integer ci, Integer count) {
     }
 
 }
