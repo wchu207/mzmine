@@ -374,7 +374,7 @@ public class RowsSpectralMatchTask extends AbstractTask {
 
       for (var entry : entries) {
         float rt = scan.getRetentionTime();
-        Float ri = scan.getRetentionIndex();
+        Integer ri = scan.getRetentionIndex();
         final SpectralSimilarity sim = matchSpectrum(rt, ri, scanPrecursorMZ, precursorCCS, masses,
             entry);
         if (sim != null) {
@@ -546,7 +546,7 @@ public class RowsSpectralMatchTask extends AbstractTask {
    * @param ident       library entry
    * @return spectral similarity or null if no match
    */
-  private SpectralSimilarity matchSpectrum(Float rowRT, Float rowRI, double rowMZ, Float rowCCS,
+  private SpectralSimilarity matchSpectrum(Float rowRT, Integer rowRI, double rowMZ, Float rowCCS,
       DataPoint[] rowMassList, SpectralLibraryEntry ident) {
     // prefilters
     if (!checkRT(rowRT, ident) // retention time optional
@@ -633,7 +633,7 @@ public class RowsSpectralMatchTask extends AbstractTask {
     return (rt == null || rtTolerance.checkWithinTolerance(rt, retentionTime));
   }
 
-  private boolean checkRI(Float retentionIndex, SpectralLibraryEntry ident) {
+  private boolean checkRI(Integer retentionIndex, SpectralLibraryEntry ident) {
     if (!useRI || retentionIndex == null) {
       return true;
     }
