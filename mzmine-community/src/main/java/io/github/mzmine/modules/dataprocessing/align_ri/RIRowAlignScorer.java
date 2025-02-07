@@ -23,7 +23,7 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
-package io.github.mzmine.modules.dataprocessing.align_gc;
+package io.github.mzmine.modules.dataprocessing.align_ri;
 
 import com.google.common.collect.Range;
 import io.github.mzmine.datamodel.DataPoint;
@@ -31,48 +31,62 @@ import io.github.mzmine.datamodel.Scan;
 import io.github.mzmine.datamodel.features.FeatureList;
 import io.github.mzmine.datamodel.features.FeatureListRow;
 import io.github.mzmine.datamodel.features.ModularFeatureList;
+import io.github.mzmine.datamodel.features.types.numbers.RIType;
 import io.github.mzmine.modules.dataprocessing.align_common.FeatureRowAlignScorer;
 import io.github.mzmine.modules.dataprocessing.align_join.RowAlignmentScoreCalculator;
 import io.github.mzmine.modules.dataprocessing.align_join.RowVsRowScore;
 import io.github.mzmine.parameters.ParameterSet;
 import io.github.mzmine.parameters.parametertypes.tolerances.MZTolerance;
+import io.github.mzmine.parameters.parametertypes.tolerances.RITolerance;
 import io.github.mzmine.parameters.parametertypes.tolerances.RTTolerance;
 import io.github.mzmine.util.FeatureListUtils;
 import io.github.mzmine.util.exceptions.MissingMassListException;
 import io.github.mzmine.util.scans.similarity.SpectralSimilarity;
 import io.github.mzmine.util.scans.similarity.SpectralSimilarityFunction;
 import io.github.mzmine.util.scans.similarity.SpectralSimilarityFunctions;
-import java.util.List;
-import java.util.concurrent.ConcurrentLinkedDeque;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.List;
+import java.util.concurrent.ConcurrentLinkedDeque;
+import java.util.stream.Stream;
+
+import static io.github.mzmine.util.RangeUtils.isNullOrUnbounded;
+
 /**
- * Align features based on RT and spectral similarity in the {@link GCAlignerTask}
+ * Align features based on RT and spectral similarity in the {@link RIAlignerTask}
  */
-public class GcRowAlignScorer implements FeatureRowAlignScorer {
+public class RIRowAlignScorer implements FeatureRowAlignScorer {
 
   private final MZTolerance mzTolerance;
-  private final RTTolerance rtTolerance;
+  private final RITolerance riTolerance;
   private final SpectralSimilarityFunction similarityFunction;
-  private final double rtWeight;
+  private final double riWeight;
 
-  public GcRowAlignScorer(final ParameterSet parameters) {
-    this.mzTolerance = parameters.getValue(GCAlignerParameters.MZ_TOLERANCE);
-    this.rtTolerance = parameters.getValue(GCAlignerParameters.RT_TOLERANCE);
-    rtWeight = parameters.getValue(GCAlignerParameters.RT_WEIGHT);
-    var simfuncParams = parameters.getParameter(GCAlignerParameters.SIMILARITY_FUNCTION)
+  public RIRowAlignScorer(final ParameterSet parameters) {
+    this.mzTolerance = parameters.getValue(RIAlignerParameters.MZ_TOLERANCE);
+    this.riTolerance = parameters.getValue(RIAlignerParameters.RI_TOLERANCE);
+    riWeight = parameters.getValue(RIAlignerParameters.RI_WEIGHT);
+    var simfuncParams = parameters.getParameter(RIAlignerParameters.SIMILARITY_FUNCTION)
         .getValueWithParameters();
     this.similarityFunction = SpectralSimilarityFunctions.createOption(simfuncParams);
   }
 
   @Override
-  public void scoreRowAgainstBaseRows(final List<FeatureListRow> baseRowsByRt,
+  public void scoreRowAgainstBaseRows(final List<FeatureListRow> baseRowsByRi,
       final FeatureListRow rowToAdd, final ConcurrentLinkedDeque<RowVsRowScore> scoresList) {
 
-    final Range<Float> rtRange = rtTolerance.getToleranceRange(rowToAdd.getAverageRT());
+    final Range<Integer> riRange = riTolerance.getToleranceRange(rowToAdd.getAverageRI());
+
     // find all rows in the aligned rows that might match
-    final List<FeatureListRow> candidatesInAligned = FeatureListUtils.getCandidatesWithinRtRange(
-        rtRange, baseRowsByRt, true);
+    // Range.all is returned for missing RI, must handle as FeatureListUtils cannot seem to
+    List<FeatureListRow> candidatesInAligned = !isNullOrUnbounded(riRange)
+        ? FeatureListUtils.getCandidatesWithinRiRange(
+            riRange,
+            baseRowsByRi.stream().filter(row -> row.getAverageRI() != null).toList(),
+            true)
+        : baseRowsByRi;
+    candidatesInAligned = Stream.concat(candidatesInAligned.stream(), baseRowsByRi.stream().filter(row -> rowToAdd.getAverageRI() == null)).toList();
+
     if (candidatesInAligned.isEmpty()) {
       return;
     }
@@ -82,8 +96,8 @@ public class GcRowAlignScorer implements FeatureRowAlignScorer {
       // retention time is already checked for candidates
       SpectralSimilarity similarity = checkSpectralSimilarity(rowToAdd, candidateInAligned);
       if (similarity != null) {
-        final RowVsRowScore score = new RowVsRowScore(rowToAdd, candidateInAligned, rtRange, null,
-            rtWeight, 0, similarity.getScore(), 1);
+        final RowVsRowScore score = new RowVsRowScore(rowToAdd, candidateInAligned,
+            null, riRange,0, riWeight, similarity.getScore(), 1);
         scoresList.add(score);
       }
     }
@@ -125,7 +139,7 @@ public class GcRowAlignScorer implements FeatureRowAlignScorer {
 
     // TODO think about best way to calculate an alignment score that also includes spectral similarity
     RowAlignmentScoreCalculator calculator = new RowAlignmentScoreCalculator(originalFeatureLists,
-        mzTolerance, rtTolerance, null, null, 0, rtWeight, 0, 0);
+        mzTolerance, null, riTolerance, null, 0 , 0, riWeight, 0);
     FeatureListUtils.addAlignmentScores(alignedFeatureList, calculator, false);
   }
 }

@@ -92,8 +92,19 @@ public class RIType extends IntegerType {
   public Object evaluateBindings(@NotNull BindingsType bindingsType, @NotNull List <? extends ModularDataModel> models) {
     switch (bindingsType) {
       case AVERAGE:
-        Double mean = (Double) super.evaluateBindings(AVERAGE, models);
-        return mean != null ? (int) Math.round(mean) : null;
+      {
+        // calc average center of ranges
+        double mean = 0.0;
+        int c = 0;
+        for (var model : models) {
+          Integer value = model.get(this);
+          if (value != null) {
+            mean += value;
+            c++;
+          }
+        }
+        return c == 0 ? null : Math.toIntExact(Math.round(mean / (double) c));
+      }
       case RANGE:
         Integer max = (Integer) evaluateBindings(MAX, models);
         Integer min = (Integer) evaluateBindings(MIN, models);

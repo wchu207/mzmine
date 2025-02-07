@@ -47,10 +47,8 @@ import io.github.mzmine.util.FeatureListUtils;
 import io.github.mzmine.util.MemoryMapStorage;
 import io.mzio.links.MzioMZmineLinks;
 import it.unimi.dsi.fastutil.objects.Object2BooleanOpenHashMap;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.ListIterator;
+
+import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.logging.Logger;
@@ -177,7 +175,7 @@ public class BaseFeatureListAligner {
     return new AlignedRemainingRows(alignedCounter.get(), remainingCounter.get());
   }
 
-  public ModularFeatureList alignFeatureLists() {
+  public ModularFeatureList alignFeatureLists(final FeatureListRowSorter finalOrdering) {
     // Remember how many rows we need to process. Each row will be processed
     // twice, first for score calculation, second for actual alignment.
     long totalRows = featureLists.stream().mapToLong(FeatureList::getNumberOfRows).sum();
@@ -214,8 +212,9 @@ public class BaseFeatureListAligner {
       iteration++;
     }
 
-    // sort by RT and reset IDs
-    FeatureListUtils.sortByDefaultRT(alignedFeatureList, true);
+    // sort and reset IDs
+    alignedFeatureList.getRows().sort(Comparator.nullsLast(finalOrdering));
+    FeatureListUtils.renumberIDs(alignedFeatureList);
 
     // update row bindings
     alignedFeatureList.parallelStream().filter(row -> row.getNumberOfFeatures() > 1)
@@ -224,6 +223,7 @@ public class BaseFeatureListAligner {
     // score alignment by the number of features that fall within the mz, RT, mobility range
     // do not apply all the advanced filters to keep it simple
     rowAligner.calculateAlignmentScores(alignedFeatureList, featureLists);
+
 
     return alignedFeatureList;
   }
@@ -290,8 +290,8 @@ public class BaseFeatureListAligner {
             (ModularFeatureListRow) unalignedRow, true));
       }
     }
-    // either by mz in Join or by RT by GC
-    nextBaseRows.sort(baseRowSorter);
+    // either by mz in Join or by RT or RI
+    nextBaseRows.sort(Comparator.nullsLast(baseRowSorter));
 
     // align all remaining feature lists onto the feature list with max(row number) = nextBaseRows
     if (!allRows.isEmpty()) {

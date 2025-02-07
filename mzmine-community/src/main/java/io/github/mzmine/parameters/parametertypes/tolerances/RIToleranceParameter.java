@@ -41,8 +41,8 @@ import static java.lang.Boolean.parseBoolean;
 
 public class RIToleranceParameter implements UserParameter<RITolerance, RIToleranceComponent> {
 
-  private static final String DEFAULT_NAME = "Retention time tolerance";
-  private static final String DEFAULT_DESC = "Maximum allowed difference between two retention time values";
+  private static final String DEFAULT_NAME = "Retention index tolerance";
+  private static final String DEFAULT_DESC = "Maximum allowed difference between two retention index values";
   private final ObservableList<RIColumn> columnTypes;
   private String name, description;
   private RITolerance value;
@@ -148,20 +148,14 @@ public class RIToleranceParameter implements UserParameter<RITolerance, RITolera
       return;
     }
 
-    String columnAttrIgnore = xmlElement.getAttribute("ignoreWithoutRI");
-    if (columnAttrIgnore == null || columnAttrIgnore.isEmpty()) {
-      return;
-    }
-
     RIColumn columnType = RIColumn.valueOf(columnAttrType);
-    boolean ignoreWithoutRI = parseBoolean(columnAttrIgnore);
 
     String toleranceNum = xmlElement.getTextContent();
     if (toleranceNum.length() == 0) {
       return;
     }
     int tolerance = Integer.parseInt(toleranceNum);
-    this.value = new RITolerance(tolerance, columnType, ignoreWithoutRI);
+    this.value = new RITolerance(tolerance, columnType);
   }
 
   @Override
@@ -170,7 +164,6 @@ public class RIToleranceParameter implements UserParameter<RITolerance, RITolera
       return;
     }
     xmlElement.setAttribute("columnType", value.getColumn().name());
-    xmlElement.setAttribute("ignoreWithoutRI", Boolean.toString(value.shouldIgnoreWithoutRI()));
     int tolerance = value.getTolerance();
     String toleranceNum = String.valueOf(tolerance);
     xmlElement.setTextContent(toleranceNum);

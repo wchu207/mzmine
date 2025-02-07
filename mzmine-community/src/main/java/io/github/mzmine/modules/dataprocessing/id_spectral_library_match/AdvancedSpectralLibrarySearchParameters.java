@@ -50,6 +50,8 @@ public class AdvancedSpectralLibrarySearchParameters extends SimpleParameterSet 
   public static final OptionalParameter<RIToleranceParameter> riTolerance = new OptionalParameter<>(
           new RIToleranceParameter("RI tolerance [±]", "Retention index tolerance for spectral library entries to be matched against a feature."));
 
+  public static final BooleanParameter ignoreWithoutRI = new BooleanParameter("Ignore library entries without RIs", "");
+
   public static final OptionalModuleParameter<MassListDeisotoperParameters> deisotoping = new OptionalModuleParameter<>(
       "13C deisotoping",
       "Removes 13C isotope signals from the query and library spectrum before matching",
@@ -66,7 +68,7 @@ public class AdvancedSpectralLibrarySearchParameters extends SimpleParameterSet 
           3, 0, 1000), false);
 
   public AdvancedSpectralLibrarySearchParameters() {
-    super(rtTolerance, riTolerance, ccsTolerance, deisotoping, needsIsotopePattern, cropSpectraToOverlap);
+    super(rtTolerance, riTolerance, ignoreWithoutRI, ccsTolerance, deisotoping, needsIsotopePattern, cropSpectraToOverlap);
   }
 
 

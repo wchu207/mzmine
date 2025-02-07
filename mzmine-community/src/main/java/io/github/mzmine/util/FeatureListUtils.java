@@ -25,8 +25,7 @@
 
 package io.github.mzmine.util;
 
-import static io.github.mzmine.util.FeatureListRowSorter.DEFAULT_RT;
-import static io.github.mzmine.util.FeatureListRowSorter.MZ_ASCENDING;
+import static io.github.mzmine.util.FeatureListRowSorter.*;
 import static io.github.mzmine.util.RangeUtils.calcCenterScore;
 import static io.github.mzmine.util.RangeUtils.isBounded;
 
@@ -47,6 +46,7 @@ import io.github.mzmine.datamodel.features.types.alignment.AlignmentMainType;
 import io.github.mzmine.datamodel.features.types.alignment.AlignmentScores;
 import io.github.mzmine.datamodel.features.types.numbers.IDType;
 import io.github.mzmine.datamodel.features.types.numbers.MobilityType;
+import io.github.mzmine.datamodel.features.types.numbers.RIType;
 import io.github.mzmine.gui.framework.fx.features.ParentFeatureListPaneGroup;
 import io.github.mzmine.modules.dataprocessing.align_join.RowAlignmentScoreCalculator;
 import io.github.mzmine.modules.visualization.featurelisttable_modular.FeatureTableFX;
@@ -180,6 +180,24 @@ public class FeatureListUtils {
     return BinarySearch.indexRange(rtRange, rows, FeatureListRow::getAverageRT).sublist(rows);
   }
 
+  /**
+   * All features within all ranges. Use a sorted list to speed up search. Use range.all() instead
+   * of null for missign ranges
+   *
+   * @param riRange search range in retention time, provide Range.all() if no RT
+   * @param rows    the list of rows to search in
+   * @return an unsorted list of candidates within all three ranges if provided
+   */
+  public static @NotNull List<FeatureListRow> getCandidatesWithinRiRange(
+      @NotNull Range<Integer> riRange, @NotNull List<FeatureListRow> rows,
+      boolean sortedByDefaultRi) {
+
+    if (!sortedByDefaultRi) {
+      rows = rows.stream().sorted(DEFAULT_RI).toList();
+    }
+    return BinarySearch.indexRange(riRange, rows, FeatureListRow::getAverageRI).sublist(rows);
+  }
+
 
   /**
    * Searches for the given mz value - or the closest available row in the list of rows. Copied from
@@ -266,10 +284,10 @@ public class FeatureListUtils {
    * @return Optional of the best row with the highest score
    */
   public static <T extends FeatureListRow> Optional<T> getBestRow(@NotNull final List<T> rows,
-      @Nullable Range<Double> mzRange, @Nullable Range<Float> rtRange,
+      @Nullable Range<Double> mzRange, @Nullable Range<Float> rtRange, @Nullable Range<Integer> riRange,
       @Nullable Range<Float> mobilityRange, @Nullable Range<Float> ccsRange, double mzWeight,
-      double rtWeight, double mobilityWeight, double ccsWeight) {
-    return getBestRow(rows, mzRange, rtRange, mobilityRange, ccsRange, mzWeight, rtWeight,
+      double rtWeight, double riWeight, double mobilityWeight, double ccsWeight) {
+    return getBestRow(rows, mzRange, rtRange, riRange, mobilityRange, ccsRange, mzWeight, rtWeight, riWeight,
         mobilityWeight, ccsWeight, t -> true);
   }
 
@@ -285,13 +303,13 @@ public class FeatureListUtils {
    * @return Optional of the best row with the highest score
    */
   public static <T extends FeatureListRow> Optional<T> getBestRow(@NotNull final List<T> rows,
-      @Nullable Range<Double> mzRange, @Nullable Range<Float> rtRange,
+      @Nullable Range<Double> mzRange, @Nullable Range<Float> rtRange, @Nullable Range<Integer> riRange,
       @Nullable Range<Float> mobilityRange, @Nullable Range<Float> ccsRange, double mzWeight,
-      double rtWeight, double mobilityWeight, double ccsWeight,
+      double rtWeight, double riWeight, double mobilityWeight, double ccsWeight,
       @NotNull Predicate<T> additionalRowFilter) {
     return rows.stream().filter(additionalRowFilter).max(Comparator.comparingDouble(
-        r -> getAlignmentScore(r, mzRange, rtRange, mobilityRange, ccsRange, mzWeight, rtWeight,
-            mobilityWeight, ccsWeight)));
+        r -> getAlignmentScore(r, mzRange, rtRange, riRange, mobilityRange, ccsRange, mzWeight, rtWeight,
+            riWeight, mobilityWeight, ccsWeight)));
   }
 
   /**
@@ -330,19 +348,21 @@ public class FeatureListUtils {
    * @param feature        target feature
    * @param mzRange        allowed range
    * @param rtRange        allowed range
+   * @param riRange        allowed range
    * @param mobilityRange  allowed range
    * @param mzWeight       weight factor
    * @param rtWeight       weight factor
+   * @param riWeight       weight factor
    * @param mobilityWeight weight factor
    * @return the alignment score between 0-1 with 1 being a perfect match
    */
   public static double getAlignmentScore(Feature feature, @Nullable Range<Double> mzRange,
-      @Nullable Range<Float> rtRange, @Nullable Range<Float> mobilityRange,
-      @Nullable Range<Float> ccsRange, double mzWeight, double rtWeight, double mobilityWeight,
+      @Nullable Range<Float> rtRange, @Nullable Range<Integer> riRange, @Nullable Range<Float> mobilityRange,
+      @Nullable Range<Float> ccsRange, double mzWeight, double rtWeight, double riWeight, double mobilityWeight,
       double ccsWeight) {
-    return getAlignmentScore(feature.getMZ(), feature.getRT(), feature.getMobility(),
-        feature.getCCS(), mzRange, rtRange, mobilityRange, ccsRange, mzWeight, rtWeight,
-        mobilityWeight, ccsWeight);
+    return getAlignmentScore(feature.getMZ(), feature.getRT(), feature.getRI(), feature.getMobility(),
+        feature.getCCS(), mzRange, rtRange, riRange, mobilityRange, ccsRange, mzWeight, rtWeight,
+        riWeight, mobilityWeight, ccsWeight);
   }
 
   /**
@@ -360,11 +380,11 @@ public class FeatureListUtils {
    * @return the alignment score between 0-1 with 1 being a perfect match
    */
   public static double getAlignmentScore(FeatureListRow row, @Nullable Range<Double> mzRange,
-      @Nullable Range<Float> rtRange, @Nullable Range<Float> mobilityRange,
-      @Nullable Range<Float> ccsRange, double mzWeight, double rtWeight, double mobilityWeight,
+      @Nullable Range<Float> rtRange, @Nullable Range<Integer> riRange, @Nullable Range<Float> mobilityRange,
+      @Nullable Range<Float> ccsRange, double mzWeight, double rtWeight, double riWeight, double mobilityWeight,
       double ccsWeight) {
-    return getAlignmentScore(row.getAverageMZ(), row.getAverageRT(), row.getAverageMobility(),
-        row.getAverageCCS(), mzRange, rtRange, mobilityRange, ccsRange, mzWeight, rtWeight,
+    return getAlignmentScore(row.getAverageMZ(), row.getAverageRT(), row.getAverageRI(), row.getAverageMobility(),
+        row.getAverageCCS(), mzRange, rtRange, riRange, mobilityRange, ccsRange, mzWeight, rtWeight, riWeight,
         mobilityWeight, ccsWeight);
   }
 
@@ -378,9 +398,10 @@ public class FeatureListUtils {
    * @param rtWeight weight factor
    * @return the alignment score between 0-1 with 1 being a perfect match
    */
-  public static double getAlignmentScore(FeatureListRow row, @Nullable Range<Float> rtRange,
-      double similarity, double rtWeight, double similarityWeight) {
-    return getAlignmentScore(row.getAverageRT(), rtRange, similarity, rtWeight, similarityWeight);
+  public static double getAlignmentScore(FeatureListRow row, double similarity,
+      @Nullable Range<Float> rtRange, @Nullable Range<Integer> riRange,
+      double rtWeight, double riWeight, double similarityWeight) {
+    return getAlignmentScore(row.getAverageRT(), row.getAverageRI(), similarity, rtRange, riRange, rtWeight, riWeight, similarityWeight);
   }
 
   /**
@@ -390,19 +411,21 @@ public class FeatureListUtils {
    *
    * @param testMz         tested value
    * @param testRt         tested value
+   * @param testRi         tested value
    * @param testMobility   tested value
    * @param mzRange        allowed range
    * @param rtRange        allowed range
+   * @param riRange        allowed range
    * @param mobilityRange  allowed range
    * @param mzWeight       weight factor
    * @param rtWeight       weight factor
    * @param mobilityWeight weight factor
    * @return the alignment score between 0-1 with 1 being a perfect match
    */
-  public static double getAlignmentScore(Double testMz, Float testRt, Float testMobility,
+  public static double getAlignmentScore(Double testMz, Float testRt, Integer testRi, Float testMobility,
       Float testCCS, @Nullable Range<Double> mzRange, @Nullable Range<Float> rtRange,
-      @Nullable Range<Float> mobilityRange, @Nullable Range<Float> ccsRange, double mzWeight,
-      double rtWeight, double mobilityWeight, double ccsWeight) {
+      @Nullable Range<Integer> riRange, @Nullable Range<Float> mobilityRange, @Nullable Range<Float> ccsRange,
+      double mzWeight, double rtWeight, double riWeight, double mobilityWeight, double ccsWeight) {
 
     ScoreAccumulator score = new ScoreAccumulator();
 
@@ -410,6 +433,7 @@ public class FeatureListUtils {
     // don't score range.all, will distort the scoring.
     checkAndAddCenterScore(score, testMz, mzRange, mzWeight);
     checkAndAddCenterScore(score, testRt, rtRange, rtWeight);
+    checkAndAddCenterScore(score, testRi, riRange, riWeight);
     checkAndAddCenterScore(score, testMobility, mobilityRange, mobilityWeight);
     checkAndAddCenterScore(score, testCCS, ccsRange, ccsWeight);
 
@@ -455,23 +479,46 @@ public class FeatureListUtils {
   }
 
   /**
+   * Test how close testedValue is to the center of the range (perfect score 1), scaled 0-1. Only
+   * adds the weighted score if value and range are not null, and if weigth is >0
+   *
+   * @param score       accumulates the score and weights
+   * @param testedValue value to be tested for center of range
+   * @param range       center and length of range are used. Unbounded or null ranges will discard
+   *                    this score
+   * @param weight      weight of the score
+   */
+  public static void checkAndAddCenterScore(@NotNull final ScoreAccumulator score,
+                                            @Nullable final Integer testedValue, final @Nullable Range<Integer> range,
+                                            final double weight) {
+    if (weight > 0 && isBounded(range) && testedValue != null) {
+      // no negative numbers
+      score.add(calcCenterScore(testedValue, range), weight);
+    }
+  }
+
+  /**
    * Compare row average values to ranges (during alignment or annotation to other mz, rt, and
    * mobility values based on tolerances -> ranges). General score is SUM((difference
    * row-center(range)) / rangeLength * factor) / sum(factors)
    *
    * @param testRt           tested value
+   * @param testRi           tested value
    * @param testSimilarity   tested value
    * @param rtRange          allowed range
+   * @param riRange          allowed range
    * @param rtWeight         weight factor
    * @param similarityWeight weight factor
    * @return the alignment score between 0-1 with 1 being a perfect match
    */
-  public static double getAlignmentScore(Float testRt, @Nullable Range<Float> rtRange,
-      double testSimilarity, double rtWeight, double similarityWeight) {
+  public static double getAlignmentScore(Float testRt, Integer testRi, double testSimilarity,
+                                         @Nullable Range<Float> rtRange, @Nullable Range<Integer> riRange,
+                                         double rtWeight, double riWeight, double similarityWeight) {
 
     ScoreAccumulator score = new ScoreAccumulator();
     // don't score range.all, will distort the scoring.
     checkAndAddCenterScore(score, testRt, rtRange, rtWeight);
+    checkAndAddCenterScore(score, testRi, riRange, riWeight);
     if (similarityWeight > 0) {
       score.add(testSimilarity, similarityWeight);
     }
@@ -505,6 +552,16 @@ public class FeatureListUtils {
   public static void sortByDefaultRT(FeatureList featureList) {
     // sort rows by rt
     featureList.getRows().sort(FeatureListRowSorter.DEFAULT_RT);
+  }
+
+  /**
+   * Sort feature list by retention index (default)
+   *
+   * @param featureList target list
+   */
+  public static void sortByDefaultRI(FeatureList featureList) {
+    // sort rows by rt
+    featureList.getRows().sort(FeatureListRowSorter.DEFAULT_RI);
   }
 
   /**
@@ -548,6 +605,14 @@ public class FeatureListUtils {
       return;
     }
     // reset IDs
+    int newRowID = 1;
+    for (var row : featureList.getRows()) {
+      row.set(IDType.class, newRowID);
+      newRowID++;
+    }
+  }
+
+  public static void renumberIDs(FeatureList featureList) {
     int newRowID = 1;
     for (var row : featureList.getRows()) {
       row.set(IDType.class, newRowID);

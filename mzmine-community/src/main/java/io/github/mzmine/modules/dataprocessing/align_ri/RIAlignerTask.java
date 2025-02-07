@@ -23,9 +23,7 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
-package io.github.mzmine.modules.dataprocessing.align_join;
-
-import static io.github.mzmine.util.FeatureListRowSorter.MZ_ASCENDING;
+package io.github.mzmine.modules.dataprocessing.align_ri;
 
 import io.github.mzmine.datamodel.MZmineProject;
 import io.github.mzmine.datamodel.features.FeatureList;
@@ -33,26 +31,23 @@ import io.github.mzmine.datamodel.features.ModularFeatureList;
 import io.github.mzmine.modules.MZmineModule;
 import io.github.mzmine.modules.dataprocessing.align_common.BaseFeatureListAligner;
 import io.github.mzmine.modules.dataprocessing.align_common.FeatureCloner;
-import io.github.mzmine.modules.dataprocessing.align_common.FeatureCloner.ReuseOriginalFeature;
-import io.github.mzmine.modules.dataprocessing.align_common.FeatureCloner.SimpleFeatureCloner;
+import io.github.mzmine.modules.dataprocessing.align_common.FeatureCloner.ExtractMzMismatchFeatureCloner;
 import io.github.mzmine.parameters.ParameterSet;
 import io.github.mzmine.parameters.parametertypes.OriginalFeatureListHandlingParameter.OriginalFeatureListOption;
 import io.github.mzmine.taskcontrol.AbstractFeatureListTask;
-import io.github.mzmine.taskcontrol.Task;
-import io.github.mzmine.taskcontrol.TaskStatus;
 import io.github.mzmine.util.FeatureListRowSorter;
 import io.github.mzmine.util.MemoryMapStorage;
-import java.time.Instant;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.logging.Logger;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class JoinAlignerTask extends AbstractFeatureListTask {
+import java.time.Instant;
+import java.util.Arrays;
+import java.util.List;
+import java.util.logging.Logger;
 
-  private static final Logger logger = Logger.getLogger(JoinAlignerTask.class.getName());
+public class RIAlignerTask extends AbstractFeatureListTask {
+
+  private static final Logger logger = Logger.getLogger(RIAlignerTask.class.getName());
 
 
   /**
@@ -67,17 +62,18 @@ public class JoinAlignerTask extends AbstractFeatureListTask {
   private final OriginalFeatureListOption handleOriginal;
   private BaseFeatureListAligner listAligner;
 
-  public JoinAlignerTask(MZmineProject project, @Nullable MemoryMapStorage storage,
-      @NotNull Instant moduleCallDate, @NotNull ParameterSet parameters,
-      @NotNull Class<? extends MZmineModule> moduleClass) {
+  public RIAlignerTask(MZmineProject project, @Nullable MemoryMapStorage storage,
+                       @NotNull Instant moduleCallDate, @NotNull ParameterSet parameters,
+                       @NotNull Class<? extends MZmineModule> moduleClass) {
     super(storage, moduleCallDate, parameters, moduleClass);
     this.project = project;
-    handleOriginal = parameters.getValue(JoinAlignerParameters.handleOriginal);
+    handleOriginal = parameters.getValue(RIAlignerParameters.handleOriginal);
     reuseOriginalFeatures = handleOriginal != OriginalFeatureListOption.KEEP;
-    featureListName = parameters.getValue(JoinAlignerParameters.peakListName);
+
+    featureListName = parameters.getValue(RIAlignerParameters.FEATURE_LIST_NAME);
 
     featureLists = Arrays.stream(
-            parameters.getValue(JoinAlignerParameters.peakLists).getMatchingFeatureLists())
+            parameters.getValue(RIAlignerParameters.FEATURE_LISTS).getMatchingFeatureLists())
         .map(flist -> (FeatureList) flist).toList();
 
     this.parameters = parameters;
@@ -93,40 +89,27 @@ public class JoinAlignerTask extends AbstractFeatureListTask {
 
   @Override
   protected void process() {
-    List<String> errors = new ArrayList<>();
-    if (!parameters.checkParameterValues(errors)) {
-      setStatus(TaskStatus.ERROR);
-      setErrorMessage(String.join("\n", errors));
-      return;
-    }
 
-    logger.info(
-        () -> "Running parallel join aligner on " + featureLists.size() + " feature lists.");
+    logger.info(() -> "Running parallel GC aligner on " + featureLists.size() + " feature lists.");
 
-    listAligner = createAligner(this, getMemoryMapStorage(), parameters, featureLists,
-        featureListName, reuseOriginalFeatures);
-    alignedFeatureList = listAligner.alignFeatureLists(FeatureListRowSorter.DEFAULT_RT);
+    var mzTolerance = parameters.getValue(RIAlignerParameters.MZ_TOLERANCE);
+    FeatureCloner featureCloner = new ExtractMzMismatchFeatureCloner(mzTolerance,
+        reuseOriginalFeatures);
+    // create the row aligner that handles the scoring
+    var rowAligner = new RIRowAlignScorer(parameters);
+    listAligner = new BaseFeatureListAligner(this, featureLists, featureListName,
+        getMemoryMapStorage(), rowAligner, featureCloner, FeatureListRowSorter.DEFAULT_RI);
 
+    alignedFeatureList = listAligner.alignFeatureLists(FeatureListRowSorter.DEFAULT_RI);
     if (alignedFeatureList == null || isCanceled()) {
       return;
     }
 
     handleOriginal.reflectNewFeatureListToProject(project, alignedFeatureList, featureLists);
 
-    logger.info("Finished join aligner");
+    logger.info("Finished GC aligner");
   }
 
-  public static BaseFeatureListAligner createAligner(final @Nullable Task parentTask,
-      final @Nullable MemoryMapStorage storage, final ParameterSet parameters,
-      final List<FeatureList> featureLists, final String featureListName,
-      final boolean reuseOriginalFeatures) {
-    FeatureCloner featureCloner =
-        reuseOriginalFeatures ? new ReuseOriginalFeature() : new SimpleFeatureCloner();
-    // create the row aligner that handles the scoring
-    var rowAligner = new JoinRowAlignScorer(parameters);
-    return new BaseFeatureListAligner(parentTask, featureLists, featureListName, storage,
-        rowAligner, featureCloner, MZ_ASCENDING);
-  }
 
   @Override
   protected @NotNull List<FeatureList> getProcessedFeatureLists() {
@@ -135,7 +118,6 @@ public class JoinAlignerTask extends AbstractFeatureListTask {
 
   @Override
   public String getTaskDescription() {
-    return "Join align feature lists";
+    return "Align GC feature lists";
   }
-
 }

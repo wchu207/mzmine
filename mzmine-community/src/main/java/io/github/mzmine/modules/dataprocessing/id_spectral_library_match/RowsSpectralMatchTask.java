@@ -106,6 +106,7 @@ public class RowsSpectralMatchTask extends AbstractTask {
   protected PercentTolerance ccsTolerance;
   private boolean useRT;
   private boolean useRI;
+  private boolean shouldIgnoreWithoutRI;
   private boolean cropSpectraToOverlap;
   // remove 13C isotopes
   private boolean removeIsotopes;
@@ -135,6 +136,7 @@ public class RowsSpectralMatchTask extends AbstractTask {
     useRI = false;
     rtTolerance = null;
     riTolerance = null;
+    shouldIgnoreWithoutRI = false;
 
     minMatch = parameters.getValue(SpectralLibrarySearchParameters.minMatch);
     var simfuncParams = parameters.getParameter(SpectralLibrarySearchParameters.similarityFunction)
@@ -213,6 +215,7 @@ public class RowsSpectralMatchTask extends AbstractTask {
       useRI = advanced.getValue(AdvancedSpectralLibrarySearchParameters.riTolerance);
       riTolerance = advanced.getParameter(AdvancedSpectralLibrarySearchParameters.riTolerance)
               .getEmbeddedParameter().getValue();
+      shouldIgnoreWithoutRI = advanced.getParameter(AdvancedSpectralLibrarySearchParameters.ignoreWithoutRI).getValue();
 
       needsIsotopePattern = advanced.getValue(
           AdvancedSpectralLibrarySearchParameters.needsIsotopePattern);
@@ -472,8 +475,10 @@ public class RowsSpectralMatchTask extends AbstractTask {
             continue;
           }
 
-          SpectralSimilarity sim = matchSpectrum(row.getAverageRT(), row.get(RIType.class), row.getAverageMZ(), rowCCS,
-              rowMassLists.get(i), ident);
+          SpectralSimilarity sim = matchSpectrum(
+            row.getAverageRT(),
+            row.getAverageRI(),
+            row.getAverageMZ(), rowCCS, rowMassLists.get(i), ident);
           if (sim != null && (!needsIsotopePattern || checkForIsotopePattern(sim,
               mzToleranceSpectra, minMatchedIsoSignals)) && (best == null
                                                              || best.getSimilarity().getScore()
@@ -638,7 +643,8 @@ public class RowsSpectralMatchTask extends AbstractTask {
       return true;
     }
     RIRecord riRecord = (RIRecord) ident.getField(DBEntryField.RI).orElse(null);
-    return (!riTolerance.shouldIgnore(riRecord) && riTolerance.checkWithinTolerance(retentionIndex, riRecord));
+    boolean shouldIgnore = shouldIgnoreWithoutRI && (riRecord == null || riRecord.getRI(riTolerance.getRIType()) == null);
+    return !shouldIgnore && riTolerance.checkWithinTolerance(retentionIndex, riRecord);
   }
 
   /**

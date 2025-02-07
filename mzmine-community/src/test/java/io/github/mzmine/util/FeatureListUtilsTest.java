@@ -119,13 +119,13 @@ class FeatureListUtilsTest {
 
   @Test
   void getAlignmentScore() {
-    double score = FeatureListUtils.getAlignmentScore(200.2, 5.1f, null, null,
-        Range.closed(200d, 201d), Range.closed(5f, 5.5f), null, null, 3, 1, 0, 0);
+    double score = FeatureListUtils.getAlignmentScore(200.2, 5.1f, null, null, null,
+        Range.closed(200d, 201d), Range.closed(5f, 5.5f), null, null, null, 3, 1, 0, 0, 0);
     Assertions.assertTrue(score >= 0);
     Assertions.assertTrue(score <= 0.5);
 
-    score = FeatureListUtils.getAlignmentScore(200.5, 5.25f, null, null,
-        Range.closed(200d, 201d), Range.closed(5f, 5.5f), null, null, 3, 1, 0, 0);
+    score = FeatureListUtils.getAlignmentScore(200.5, 5.25f, null, null, null,
+        Range.closed(200d, 201d), Range.closed(5f, 5.5f), null, null, null, 3, 1, 0, 0, 0);
     assertEquals(1, score);
   }
 }

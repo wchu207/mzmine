@@ -39,12 +39,10 @@ public class RITolerance {
 
   private final int tolerance;
   private final RIColumn column;
-  private final boolean ignoreWithoutRI;
 
-  public RITolerance(final int rtTolerance, RIColumn type, boolean ignoreWithoutRI) {
+  public RITolerance(final int rtTolerance, RIColumn type) {
     this.tolerance = rtTolerance;
     this.column = type;
-    this.ignoreWithoutRI = ignoreWithoutRI;
   }
 
   public int getTolerance() {
@@ -55,21 +53,14 @@ public class RITolerance {
     return column;
   }
 
-  public boolean shouldIgnoreWithoutRI() {
-    return ignoreWithoutRI;
-  }
-
   public Range<Integer> getToleranceRange(final Integer riValue) {
-    // rtValue is given in minutes
-    return Range.closed(riValue - tolerance, riValue + tolerance);
-  }
-
-  public boolean shouldIgnore(RIRecord libRI) {
-    return ignoreWithoutRI && (libRI == null || libRI.getRI(column) == null);
+    // riValue may not exist depending on alkane scales
+    //   Also, averaged RI is zero when riValues do not exist
+    return riValue != null && riValue != 0 ? Range.closed(riValue - tolerance, riValue + tolerance) : Range.all();
   }
 
   public boolean checkWithinTolerance(Integer ri, RIRecord libRI) {
-    return libRI == null || libRI.getRI(column) == null || getToleranceRange(libRI.getRI(column)).contains(ri);
+    return libRI == null || getToleranceRange(libRI.getRI(column)).contains(ri);
   }
 
   public boolean checkWithinTolerance(final int ri1, final int ri2) {

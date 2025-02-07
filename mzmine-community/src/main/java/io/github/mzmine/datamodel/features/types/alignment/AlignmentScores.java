@@ -194,6 +194,20 @@ public record AlignmentScores(float rate, int alignedFeatures, int extraFeatures
     }
     return Math.max(a, b);
   }
+
+  public static Integer max(final Integer a, final Integer b) {
+    if (a == null && b == null) {
+      return null;
+    }
+    if (a == null) {
+      return b;
+    }
+    if (b == null) {
+      return a;
+    }
+    return Math.max(a, b);
+  }
+
   public static Double min(final Double a, final Double b) {
     if (a == null && b == null) {
       return null;
@@ -208,6 +222,19 @@ public record AlignmentScores(float rate, int alignedFeatures, int extraFeatures
   }
 
   public static Float min(final Float a, final Float b) {
+    if (a == null && b == null) {
+      return null;
+    }
+    if (a == null) {
+      return b;
+    }
+    if (b == null) {
+      return a;
+    }
+    return Math.min(a, b);
+  }
+
+  public static Integer min(final Integer a, final Integer b) {
     if (a == null && b == null) {
       return null;
     }

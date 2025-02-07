@@ -279,7 +279,7 @@ public class ChromatogramBlankSubtractionTask extends AbstractFeatureListTask {
     var aligner = JoinAlignerTask.createAligner(this, getMemoryMapStorage(), alignParams, blanks,
         "Blank lists aligned", false);
 
-    ModularFeatureList alignedBlanks = aligner.alignFeatureLists();
+    ModularFeatureList alignedBlanks = aligner.alignFeatureLists(FeatureListRowSorter.DEFAULT_RT);
     if (alignedBlanks == null || isCanceled()) {
       return null;
     }

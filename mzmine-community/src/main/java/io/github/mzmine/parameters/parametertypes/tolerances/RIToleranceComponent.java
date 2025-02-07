@@ -45,29 +45,24 @@ public class RIToleranceComponent extends HBox {
   private final TextFormatter<Number> textFormatter = new TextFormatter<>(
       new NumberStringConverter(format));
   private final TextField toleranceField;
-  private final CheckBox shouldIgnoreWithoutRICheckBox;
   private final ComboBox<RIColumn> toleranceType;
 
   public RIToleranceComponent(ObservableList<RIColumn> riColumnTypes) {
     this.toleranceTypes = FXCollections.observableArrayList(riColumnTypes);
 
     setSpacing(5);
-    toleranceField = new TextField();
-    toleranceField.setTextFormatter(textFormatter);
+    this.toleranceField = new TextField();
+    this.toleranceField.setTextFormatter(textFormatter);
 
-    toleranceType = new ComboBox<>(toleranceTypes);
-    toleranceType.getSelectionModel().select(0);
+    this.toleranceType = new ComboBox<>(toleranceTypes);
+    this.toleranceType.getSelectionModel().select(0);
 
-    shouldIgnoreWithoutRICheckBox = new CheckBox("Ignore library entries without RIs");
-    shouldIgnoreWithoutRICheckBox.setSelected(true);
-
-    getChildren().addAll(toleranceField, toleranceType, shouldIgnoreWithoutRICheckBox);
+    getChildren().addAll(this.toleranceField, this.toleranceType);
   }
 
   public RITolerance getValue() {
     RIColumn selectedColumnType = toleranceType.getValue();
     String valueString = toleranceField.getText();
-    boolean ignoreWithoutRI = shouldIgnoreWithoutRICheckBox.isSelected();
 
     Integer tolerance = null;
     try {
@@ -76,23 +71,20 @@ public class RIToleranceComponent extends HBox {
       return null;
     }
 
-    return new RITolerance(tolerance, selectedColumnType, ignoreWithoutRI);
+    return new RITolerance(tolerance, selectedColumnType);
   }
 
   public void setValue(@Nullable RITolerance value) {
     if (value == null) {
       toleranceField.setText("");
       toleranceType.getSelectionModel().select(0);
-      shouldIgnoreWithoutRICheckBox.setSelected(true);
       return;
     }
 
     int tolerance = value.getTolerance();
     RIColumn selectedColumnType = value.getColumn();
-    boolean ignoreWithoutRI = value.shouldIgnoreWithoutRI();
 
     toleranceType.setValue(selectedColumnType);
-    shouldIgnoreWithoutRICheckBox.setSelected(ignoreWithoutRI);
     String valueString = String.valueOf(tolerance);
     toleranceField.setText(valueString);
   }
