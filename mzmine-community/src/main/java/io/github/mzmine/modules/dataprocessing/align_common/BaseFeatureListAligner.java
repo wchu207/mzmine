@@ -29,12 +29,17 @@ import static java.util.Comparator.comparing;
 import static java.util.Comparator.comparingInt;
 
 import io.github.mzmine.datamodel.RawDataFile;
+import io.github.mzmine.datamodel.featuredata.IonTimeSeriesUtils;
+import io.github.mzmine.datamodel.featuredata.impl.StorageUtils;
 import io.github.mzmine.datamodel.features.Feature;
 import io.github.mzmine.datamodel.features.FeatureList;
 import io.github.mzmine.datamodel.features.FeatureListRow;
 import io.github.mzmine.datamodel.features.ModularFeatureList;
 import io.github.mzmine.datamodel.features.ModularFeatureListRow;
+import io.github.mzmine.datamodel.features.types.FeatureDataType;
+import io.github.mzmine.datamodel.features.types.numbers.HeightType;
 import io.github.mzmine.datamodel.features.types.numbers.IDType;
+import io.github.mzmine.datamodel.features.types.numbers.MZType;
 import io.github.mzmine.javafx.components.factories.FxTextFlows;
 import io.github.mzmine.javafx.components.factories.FxTexts;
 import io.github.mzmine.javafx.dialogs.DialogLoggerUtil;
@@ -133,9 +138,15 @@ public class BaseFeatureListAligner {
           final RawDataFile dataFile = feature.getRawDataFile();
           if (!alignedRow.hasFeature(dataFile)) {
             var newFeature = featureCloner.cloneFeature(feature, alignedFeatureList, alignedRow);
-            alignedRow.addFeature(dataFile, newFeature, false);
-            alignedRowsMap.put(row, true);
-            alignedRows.getAndIncrement();
+            if (newFeature.getMZ() != 0) {
+              // For GC-MS, ExtractMzMismatchFeatureCloner may search in raw data files
+              // if no masses are found in range, MZ = 0 and we skip this
+
+              // Otherwise, add feature to aligned row, skip this file for it in the future
+              alignedRow.addFeature(dataFile, newFeature, true);
+              alignedRowsMap.put(row, true);
+              alignedRows.getAndIncrement();
+            }
           }
         }
       }
