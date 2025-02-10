@@ -79,6 +79,7 @@ public class RICalculationTask extends AbstractFeatureListTask {
   private final ModularFeatureList featureList;
   private final OriginalFeatureListHandlingParameter.OriginalFeatureListOption handleOriginal;
   private final boolean shouldExtrapolate;
+  private final boolean shouldAddSummary;
   public volatile List <RIScale> linearScales = new ArrayList<>();
 
 
@@ -89,6 +90,7 @@ public class RICalculationTask extends AbstractFeatureListTask {
     this.project = project;
     this.featureList = featureList;
     this.shouldExtrapolate = parameters.getValue(RICalculationParameters.extrapolate);
+    this.shouldAddSummary = parameters.getValue(RICalculationParameters.addSummary);
     this.handleOriginal = parameters.getValue(RICalculationParameters.handleOriginal);
     this.suffix = parameters.getValue(RICalculationParameters.suffix);
   }
@@ -157,10 +159,12 @@ public class RICalculationTask extends AbstractFeatureListTask {
       ModularFeatureList outputList = featureList.createCopy(featureList.getName() + " with retention index", null, false);
 
       outputList.addFeatureType(new RIType());
-      outputList.addFeatureType(new RIMaxType());
-      outputList.addFeatureType(new RIMinType());
-      outputList.addFeatureType(new RIDiffType());
-      outputList.addFeatureType(new RIScaleType());
+      if (shouldAddSummary) {
+        outputList.addFeatureType(new RIMaxType());
+        outputList.addFeatureType(new RIMinType());
+        outputList.addFeatureType(new RIDiffType());
+        outputList.addFeatureType(new RIScaleType());
+      }
 
 
       for (RawDataFile file : outputList.getRawDataFiles()) {
@@ -227,7 +231,7 @@ public class RICalculationTask extends AbstractFeatureListTask {
 
   @Override
   public String getTaskDescription() {
-    return STR."Calculating RI";
+    return "Calculating RI";
   }
 
   @Override

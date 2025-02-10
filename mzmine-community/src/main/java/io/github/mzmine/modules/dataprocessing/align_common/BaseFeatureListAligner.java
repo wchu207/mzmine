@@ -29,17 +29,12 @@ import static java.util.Comparator.comparing;
 import static java.util.Comparator.comparingInt;
 
 import io.github.mzmine.datamodel.RawDataFile;
-import io.github.mzmine.datamodel.featuredata.IonTimeSeriesUtils;
-import io.github.mzmine.datamodel.featuredata.impl.StorageUtils;
 import io.github.mzmine.datamodel.features.Feature;
 import io.github.mzmine.datamodel.features.FeatureList;
 import io.github.mzmine.datamodel.features.FeatureListRow;
 import io.github.mzmine.datamodel.features.ModularFeatureList;
 import io.github.mzmine.datamodel.features.ModularFeatureListRow;
-import io.github.mzmine.datamodel.features.types.FeatureDataType;
-import io.github.mzmine.datamodel.features.types.numbers.HeightType;
 import io.github.mzmine.datamodel.features.types.numbers.IDType;
-import io.github.mzmine.datamodel.features.types.numbers.MZType;
 import io.github.mzmine.javafx.components.factories.FxTextFlows;
 import io.github.mzmine.javafx.components.factories.FxTexts;
 import io.github.mzmine.javafx.dialogs.DialogLoggerUtil;
@@ -52,8 +47,11 @@ import io.github.mzmine.util.FeatureListUtils;
 import io.github.mzmine.util.MemoryMapStorage;
 import io.mzio.links.MzioMZmineLinks;
 import it.unimi.dsi.fastutil.objects.Object2BooleanOpenHashMap;
-
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
+import java.util.ListIterator;
+import java.util.Comparator;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.logging.Logger;
@@ -224,6 +222,7 @@ public class BaseFeatureListAligner {
     }
 
     // sort and reset IDs
+    // handling of null values is mainly for RI
     alignedFeatureList.getRows().sort(Comparator.nullsLast(finalOrdering));
     FeatureListUtils.renumberIDs(alignedFeatureList);
 

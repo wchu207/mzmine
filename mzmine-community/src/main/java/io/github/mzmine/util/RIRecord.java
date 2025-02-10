@@ -33,12 +33,12 @@ import java.util.logging.Logger;
 import static java.util.Map.entry;
 
 
-// This holds information from the RI field in NIST libraries for gas chromatography
-//   The RI field is of form "s=RI/n_samples/CI n=RI/n_samples/CI p=RI/n_samples/CI" (CI denotes confidence interval)
+// This holds information from the RI field in spectral libraries for gas chromatography
+//   The RI field is of form "s=RI/CI/n_samples n=RI/CI/n_samples p=RI/CI/n_samples" (CI denotes confidence interval)
 //   s denotes semipolar, n denotes nonpolar, and p denotes polar
 //   If there are 0 samples for s or n or p, then that part is skipped
 //   If there is one sample, then n_samples and CI are skipped
-//   Unclear if other formats differ
+//   Unclear if non-NIST other formats differ
 
 
 public class RIRecord
@@ -73,8 +73,8 @@ public class RIRecord
             Integer s_ci = map.get(RIColumn.SEMIPOLAR).ci();
 
             // s_ri != null should always be true
-            sb.append(s_ri != null ? String.format("s=%d", Math.round(s_ri)) : "");
-            sb.append((s_ri != null && s_count != null && s_ci != null) ? String.format("/%d/%d", s_count, Math.round(s_ci)) : "");
+            sb.append(s_ri != null ? String.format("s=%d", s_ri) : "");
+            sb.append((s_ri != null && s_ci != null && s_count != null ) ? String.format("/%d/%d", s_ci, s_count) : "");
             hasPrev = s_ri != null;
         }
 
@@ -85,8 +85,8 @@ public class RIRecord
 
             // n_ri != null should always be true
             sb.append(hasPrev && n_ri != null ? " " : "");
-            sb.append(n_ri != null ? String.format("n=%d", Math.round(n_ri)) : "");
-            sb.append((n_ri != null && n_count != null && n_ci != null) ? String.format("/%d/%d", n_count, Math.round(n_ci)) : "");
+            sb.append(n_ri != null ? String.format("n=%d", n_ri) : "");
+            sb.append((n_ri != null && n_ci != null && n_count != null ) ? String.format("/%d/%d", n_ci, n_count) : "");
             hasPrev = hasPrev || n_ri != null;
         }
 
@@ -98,8 +98,8 @@ public class RIRecord
 
             // n_ri != null should always be true
             sb.append(hasPrev && p_ri != null ? " " : "");
-            sb.append(p_ri != null ? String.format("n=%d", Math.round(p_ri)) : "");
-            sb.append((p_ri != null && p_count != null && p_ci != null) ? String.format("/%d/%d", p_count, Math.round(p_ci)) : "");
+            sb.append(p_ri != null ? String.format("n=%d", p_ri) : "");
+            sb.append((p_ri != null && p_ci != null&& p_count != null ) ? String.format("/%d/%d", p_ci, p_count) : "");
             hasPrev = hasPrev || p_ri != null;
         }
 

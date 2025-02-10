@@ -46,7 +46,6 @@ import io.github.mzmine.datamodel.features.types.alignment.AlignmentMainType;
 import io.github.mzmine.datamodel.features.types.alignment.AlignmentScores;
 import io.github.mzmine.datamodel.features.types.numbers.IDType;
 import io.github.mzmine.datamodel.features.types.numbers.MobilityType;
-import io.github.mzmine.datamodel.features.types.numbers.RIType;
 import io.github.mzmine.gui.framework.fx.features.ParentFeatureListPaneGroup;
 import io.github.mzmine.modules.dataprocessing.align_join.RowAlignmentScoreCalculator;
 import io.github.mzmine.modules.visualization.featurelisttable_modular.FeatureTableFX;
@@ -561,7 +560,7 @@ public class FeatureListUtils {
    */
   public static void sortByDefaultRI(FeatureList featureList) {
     // sort rows by rt
-    featureList.getRows().sort(FeatureListRowSorter.DEFAULT_RI);
+    featureList.getRows().sort(DEFAULT_RI);
   }
 
   /**
