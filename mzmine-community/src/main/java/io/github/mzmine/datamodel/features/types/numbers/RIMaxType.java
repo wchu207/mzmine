@@ -65,7 +65,7 @@ public class RIMaxType extends IntegerType {
 
   @Override
   public @NotNull String getHeaderString() {
-    return "RI";
+    return "Max RI";
   }
 
   @NotNull
