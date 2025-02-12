@@ -160,6 +160,7 @@ import io.github.mzmine.modules.io.projectsave.ProjectSaveModule;
 import io.github.mzmine.modules.io.spectraldbsubmit.batch.LibraryBatchGenerationModule;
 import io.github.mzmine.modules.tools.batchwizard.BatchWizardModule;
 import io.github.mzmine.modules.tools.clear_project.ClearProjectModule;
+import io.github.mzmine.modules.tools.custom.CustomModule;
 import io.github.mzmine.modules.tools.isotopepatternpreview.IsotopePatternPreviewModule;
 import io.github.mzmine.modules.tools.qualityparameters.QualityParametersModule;
 import io.github.mzmine.modules.tools.timstofmaldiacq.TimsTOFMaldiAcquisitionModule;
@@ -422,7 +423,8 @@ public class BatchModeModulesList {
            * {@link io.github.mzmine.modules.MZmineModuleCategory.MainCategory#OTHER}
            */
           TimsTOFMaldiAcquisitionModule.class, //
-          SimsefImagingSchedulerModule.class //
+          SimsefImagingSchedulerModule.class, //
+          CustomModule.class //
       ));
 
   // must be modifiable so we can add more modules for mzminepro

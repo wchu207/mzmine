@@ -44,17 +44,12 @@ import io.github.mzmine.datamodel.features.types.annotations.compounddb.NPClassi
 import io.github.mzmine.datamodel.features.types.annotations.formula.FormulaType;
 import io.github.mzmine.datamodel.features.types.annotations.iin.IonAdductType;
 import io.github.mzmine.datamodel.features.types.modifiers.AnnotationType;
-import io.github.mzmine.datamodel.features.types.numbers.CCSRelativeErrorType;
-import io.github.mzmine.datamodel.features.types.numbers.CCSType;
-import io.github.mzmine.datamodel.features.types.numbers.MatchingSignalsType;
-import io.github.mzmine.datamodel.features.types.numbers.MzAbsoluteDifferenceType;
-import io.github.mzmine.datamodel.features.types.numbers.MzPpmDifferenceType;
-import io.github.mzmine.datamodel.features.types.numbers.NeutralMassType;
-import io.github.mzmine.datamodel.features.types.numbers.PrecursorMZType;
-import io.github.mzmine.datamodel.features.types.numbers.RtAbsoluteDifferenceType;
+import io.github.mzmine.datamodel.features.types.numbers.*;
 import io.github.mzmine.datamodel.features.types.numbers.scores.ExplainedIntensityPercentType;
 import io.github.mzmine.datamodel.features.types.numbers.scores.SimilarityType;
 import io.github.mzmine.modules.io.projectload.version_3_0.CONST;
+import io.github.mzmine.util.RIColumn;
+import io.github.mzmine.util.RIRecord;
 import io.github.mzmine.util.spectraldb.entry.DBEntryField;
 import io.github.mzmine.util.spectraldb.entry.SpectralDBAnnotation;
 import io.github.mzmine.util.spectraldb.entry.SpectralDBFeatureIdentity;
@@ -87,6 +82,7 @@ public class SpectralLibraryMatchesType extends ListWithSubsType<SpectralDBAnnot
       new MolecularStructureType(),//
       new SmilesStructureType(),//
       new InChIStructureType(),//
+      new RIType(),
       // classifiers
       new ClassyFireSuperclassType(), new ClassyFireClassType(), new ClassyFireSubclassType(),
       new ClassyFireParentType(), new NPClassifierSuperclassType(), new NPClassifierClassType(),
@@ -149,6 +145,7 @@ public class SpectralLibraryMatchesType extends ListWithSubsType<SpectralDBAnnot
       case RtAbsoluteDifferenceType __ -> match.getRtAbsoluteError();
       case MzAbsoluteDifferenceType __ -> match.getMzAbsoluteError();
       case MzPpmDifferenceType __ -> match.getMzPpmError();
+      case RIType __ -> ((RIRecord) entry.getField(DBEntryField.RI).orElse(null)).getRI(RIColumn.SEMIPOLAR);
       case CommentType __ -> entry.getOrElse(DBEntryField.COMMENT, null);
       default -> throw new UnsupportedOperationException(
           "DataType %s is not covered in map".formatted(subType.toString()));
