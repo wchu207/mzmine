@@ -170,7 +170,7 @@ public class RICalculationTask extends AbstractFeatureListTask {
       for (RawDataFile file : outputList.getRawDataFiles()) {
         Date sampleDate = extractDate(file.getAbsolutePath());
         for (RIScale _riScale : linearScales) {
-          if (sampleDate.after(_riScale.date) || sampleDate.equals(_riScale.date)) {
+          if (sampleDate != null && (sampleDate.after(_riScale.date) || sampleDate.equals(_riScale.date))) {
             final RIScale riScale = _riScale;
             outputList.getFeatures(file).stream().parallel().forEach(f -> processFeature(f, riScale));
             break;

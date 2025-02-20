@@ -411,6 +411,8 @@ runtime {
                    "-XX:InitialRAMPercentage=5",
                    "-XX:MinRAMPercentage=75",
                    "-XX:MaxRAMPercentage=80",
+                   "-XX:+AggressiveHeap",
+                   "-Xmx64g",
                    "-enableassertions",
                    "-Djava.util.logging.config.class=io.github.mzmine.main.MZmineLoggingConfiguration",
                    "-Djava.net.useSystemProxies=true",
