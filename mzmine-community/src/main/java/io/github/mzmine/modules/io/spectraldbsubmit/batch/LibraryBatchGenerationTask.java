@@ -303,7 +303,7 @@ public class LibraryBatchGenerationTask extends AbstractTask {
             ScanUtils.createUSI(entry.getAsString(DBEntryField.DATASET_ID).orElse(null),
                 fileNameWithoutExtension, String.valueOf(entryId)));
 
-        ExportScansFeatureTask.exportEntry(writer, entry, format, normalizer);
+        ExportScansFeatureTask.exportEntry(writer, entry, format, normalizer, null);
       }
     }
   }

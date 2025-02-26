@@ -213,6 +213,7 @@ public class ModularFeatureListRow implements FeatureListRow {
     return v == null ? Range.singleton(0d) : v;
   }
 
+
   public Map<RawDataFile, ModularFeature> getFilesFeatures() {
     return get(FeaturesType.class);
   }

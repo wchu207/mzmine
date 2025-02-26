@@ -26,11 +26,8 @@
 package io.github.mzmine.util.spectraldb.entry;
 
 import com.google.common.collect.Range;
-import io.github.mzmine.datamodel.DataPoint;
-import io.github.mzmine.datamodel.MassSpectrum;
-import io.github.mzmine.datamodel.MergedMassSpectrum;
+import io.github.mzmine.datamodel.*;
 import io.github.mzmine.datamodel.MergedMassSpectrum.MergingType;
-import io.github.mzmine.datamodel.Scan;
 import io.github.mzmine.datamodel.features.Feature;
 import io.github.mzmine.datamodel.features.FeatureListRow;
 import io.github.mzmine.datamodel.features.compoundannotations.CompoundDBAnnotation;
@@ -59,6 +56,8 @@ import java.util.function.Function;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
+
+import jakarta.json.JsonObjectBuilder;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -170,6 +169,7 @@ public class SpectralLibraryEntryFactory {
     if (row != null) {
       // FEATURE_ID is used by GNPS and SIRIUS as simple number
       entry.putIfNotNull(DBEntryField.FEATURE_ID, row.getID());
+      entry.putIfNotNull(DBEntryField.RI, row.getAverageRI());
 
       // write feature ID as feature list and row ID to identify MSn trees or MS2 spectra of the same row
       var flist = row.getFeatureList();
@@ -260,7 +260,10 @@ public class SpectralLibraryEntryFactory {
       final @Nullable Map<DBEntryField, Object> metadataMap) {
     // add instrument type etc by parameter
     SpectralLibraryEntry entry = create(storage, row, feature, scan, null, dps, metadataMap);
-
+    if (scan instanceof PseudoSpectrum) {
+      entry.putIfNotNull(DBEntryField.PSEUDOSPECTRUM, ((PseudoSpectrum) scan).getPseudoSpectrumType());
+      entry.putIfNotNull(DBEntryField.MS_LEVEL, ((PseudoSpectrum) scan).getMSLevel());
+    }
     addChimericMs1PrecursorResults(entry, chimeric); // done after all so that name may be changed
     return entry;
   }

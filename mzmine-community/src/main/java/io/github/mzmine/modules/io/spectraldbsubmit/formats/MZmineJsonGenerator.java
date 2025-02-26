@@ -44,11 +44,10 @@ import io.github.mzmine.parameters.parametertypes.IntensityNormalizer;
 import io.github.mzmine.util.io.SemverVersionReader;
 import io.github.mzmine.util.spectraldb.entry.DBEntryField;
 import io.github.mzmine.util.spectraldb.entry.SpectralLibraryEntry;
-import jakarta.json.Json;
-import jakarta.json.JsonArray;
-import jakarta.json.JsonArrayBuilder;
-import jakarta.json.JsonObjectBuilder;
+import jakarta.json.*;
+
 import java.util.List;
+
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -194,11 +193,15 @@ public class MZmineJsonGenerator {
   }
 
   public static String generateJSON(final SpectralLibraryEntry entry,
-      @NotNull final IntensityNormalizer normalizer) {
+      @NotNull final IntensityNormalizer normalizer, final JsonObjectBuilder extra) {
     JsonObjectBuilder json = Json.createObjectBuilder();
     // tag spectrum from mzmine
     String version = String.valueOf(SemverVersionReader.getMZmineVersion());
     json.add(DBEntryField.SOFTWARE.getMZmineJsonID(), "mzmine-" + version);
+
+    if (extra != null) {
+        json.addAll(extra);
+    }
 
     for (var metafield : entry.getFields().entrySet()) {
       String id = metafield.getKey().getMZmineJsonID();

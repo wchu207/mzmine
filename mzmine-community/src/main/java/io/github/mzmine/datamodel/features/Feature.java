@@ -173,6 +173,8 @@ public interface Feature {
   @Deprecated
   List<DataPoint> getDataPoints();
 
+  String getRIScale();
+
   /**
    * Returns the retention time range of all raw data points used to detect this feature
    */

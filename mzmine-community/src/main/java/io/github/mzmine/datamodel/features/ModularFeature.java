@@ -44,6 +44,7 @@ import io.github.mzmine.datamodel.features.types.FeatureInformationType;
 import io.github.mzmine.datamodel.features.types.IsotopePatternType;
 import io.github.mzmine.datamodel.features.types.MobilityUnitType;
 import io.github.mzmine.datamodel.features.types.RawFileType;
+import io.github.mzmine.datamodel.features.types.annotations.RIScaleType;
 import io.github.mzmine.datamodel.features.types.numbers.*;
 import io.github.mzmine.datamodel.impl.SimpleDataPoint;
 import io.github.mzmine.modules.tools.qualityparameters.QualityParameters;
@@ -295,6 +296,12 @@ public class ModularFeature implements Feature, ModularDataModel {
       return null;
     }
     return new SimpleDataPoint(getFeatureData().getMZ(index), getFeatureData().getIntensity(index));
+  }
+
+  @Override
+  public String getRIScale() {
+    String v = get(RIScaleType.class);
+    return v;
   }
 
   @NotNull

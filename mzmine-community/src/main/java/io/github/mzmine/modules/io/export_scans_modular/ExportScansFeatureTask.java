@@ -29,11 +29,15 @@ import static io.github.mzmine.util.scans.ScanUtils.extractDataPoints;
 
 import io.github.mzmine.datamodel.DataPoint;
 import io.github.mzmine.datamodel.MassSpectrum;
+import io.github.mzmine.datamodel.PseudoSpectrum;
 import io.github.mzmine.datamodel.Scan;
-import io.github.mzmine.datamodel.features.Feature;
-import io.github.mzmine.datamodel.features.FeatureList;
-import io.github.mzmine.datamodel.features.FeatureListRow;
-import io.github.mzmine.datamodel.features.SimpleFeatureListAppliedMethod;
+import io.github.mzmine.datamodel.features.*;
+import io.github.mzmine.datamodel.features.types.annotations.RIScaleType;
+import io.github.mzmine.datamodel.features.types.numbers.AreaType;
+import io.github.mzmine.datamodel.features.types.numbers.HeightType;
+import io.github.mzmine.datamodel.features.types.numbers.IntensityRangeType;
+import io.github.mzmine.datamodel.features.types.numbers.RTRangeType;
+import io.github.mzmine.datamodel.msms.MsMsInfo;
 import io.github.mzmine.modules.MZmineModule;
 import io.github.mzmine.modules.dataanalysis.spec_chimeric_precursor.ChimericPrecursorChecker;
 import io.github.mzmine.modules.dataanalysis.spec_chimeric_precursor.ChimericPrecursorFlag;
@@ -67,15 +71,18 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.time.Instant;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+
+import jakarta.json.Json;
+import jakarta.json.JsonArray;
+import jakarta.json.JsonObjectBuilder;
+import jakarta.json.JsonReader;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.json.JSONObject;
 
 public class ExportScansFeatureTask extends AbstractFeatureListTask {
 
@@ -304,12 +311,23 @@ public class ExportScansFeatureTask extends AbstractFeatureListTask {
 
     // export MS1 scans
     for (final SpectralLibraryEntry ms1 : ms1Scans) {
-      exportScan(ms1Writer, ms1FileNameWithoutExtension, ms1);
+      exportScan(ms1Writer, ms1FileNameWithoutExtension, ms1, null);
     }
 
+    JsonObjectBuilder map = Json.createObjectBuilder();
+    map.add("mz", row.getAverageMZ());
+    map.add("rt_range", Json.createArrayBuilder().add(row.get(RTRangeType.class).lowerEndpoint()).add(row.get(RTRangeType.class).upperEndpoint()).build());
+    map.add("mz_range", Json.createArrayBuilder().add(row.getMZRange().lowerEndpoint()).add(row.getMZRange().upperEndpoint()).build());
+    map.add("intensity_range", Json.createArrayBuilder().add(row.get(IntensityRangeType.class).lowerEndpoint()).add(row.get(IntensityRangeType.class).upperEndpoint()).build());
+    map.add("area", row.get(AreaType.class));
+    map.add("height", row.get(HeightType.class));
+    map.add("status", row.getBestFeature().getFeatureStatus().toString());
+
+    map.add("ri_scale", row.getBestFeature().getRIScale() != null ? row.getBestFeature().getRIScale() : "");
+    map.add("scan_definition", row.getBestFeature().getRepresentativeScan().getScanDefinition());
     // export MS2 scans
     for (final SpectralLibraryEntry msn : fragmentScans) {
-      exportScan(msnWriter, msnFileNameWithoutExtension, msn);
+      exportScan(msnWriter, msnFileNameWithoutExtension, msn, map);
     }
   }
 
@@ -370,7 +388,7 @@ public class ExportScansFeatureTask extends AbstractFeatureListTask {
   }
 
   private void exportScan(final BufferedWriter writer, final String fileNameWithoutExtension,
-      final SpectralLibraryEntry entry) throws IOException {
+      final SpectralLibraryEntry entry, final JsonObjectBuilder extra) throws IOException {
     // specific things that should only happen in library generation - otherwise add to the factory
     final int entryId = exported.incrementAndGet();
     entry.putIfNotNull(DBEntryField.ENTRY_ID, entryId);
@@ -380,7 +398,7 @@ public class ExportScansFeatureTask extends AbstractFeatureListTask {
             fileNameWithoutExtension, String.valueOf(entryId)));
 
     // export
-    ExportScansFeatureTask.exportEntry(writer, entry, format, normalizer);
+    ExportScansFeatureTask.exportEntry(writer, entry, format, normalizer, extra);
   }
 
   public SpectralLibraryEntry spectrumToEntry(MassSpectrum spectrum,
@@ -448,12 +466,12 @@ public class ExportScansFeatureTask extends AbstractFeatureListTask {
 
   public static void exportEntry(final @NotNull BufferedWriter writer,
       final @NotNull SpectralLibraryEntry entry, final @NotNull SpectralLibraryExportFormats format,
-      final @NotNull IntensityNormalizer normalizer) throws IOException {
+      final @NotNull IntensityNormalizer normalizer, JsonObjectBuilder extra) throws IOException {
     // TODO maybe skip empty spectra. After formatting the number of signals may be smaller than before
     // if intensity is 0 after formatting
     String stringEntry = switch (format) {
       case msp -> MSPEntryGenerator.createMSPEntry(entry, normalizer);
-      case json_mzmine -> MZmineJsonGenerator.generateJSON(entry, normalizer);
+      case json_mzmine -> MZmineJsonGenerator.generateJSON(entry, normalizer, extra);
       case mgf -> MGFEntryGenerator.createMGFEntry(entry, normalizer).spectrum();
     };
     writer.append(stringEntry).append("\n");

@@ -143,6 +143,7 @@ import io.github.mzmine.modules.io.export_rawdata_netcdf.NetCDFExportModule;
 import io.github.mzmine.modules.io.export_scans.ExportScansFromRawFilesModule;
 import io.github.mzmine.modules.io.export_scans_modular.ExportScansFeatureModule;
 import io.github.mzmine.modules.io.import_feature_networks.ImportFeatureNetworksSimpleModule;
+import io.github.mzmine.modules.io.import_features_json.JSONImportModule;
 import io.github.mzmine.modules.io.import_features_mztabm.MZTabmImportModule;
 import io.github.mzmine.modules.io.import_rawdata_all.AllSpectralDataImportModule;
 import io.github.mzmine.modules.io.import_rawdata_bruker_tdf.TDFImportModule;
@@ -400,6 +401,7 @@ public class BatchModeModulesList {
           MZTabmExportModule.class, //
           NetCDFExportModule.class, //
           SiriusExportModule.class, //
+          JSONImportModule.class, //
           MZTabmImportModule.class, //
           CSVExportModularModule.class, //
           LegacyCSVExportModule.class, //
