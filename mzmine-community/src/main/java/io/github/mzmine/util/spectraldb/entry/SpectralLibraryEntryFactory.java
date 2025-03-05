@@ -262,7 +262,6 @@ public class SpectralLibraryEntryFactory {
     SpectralLibraryEntry entry = create(storage, row, feature, scan, null, dps, metadataMap);
     if (scan instanceof PseudoSpectrum) {
       entry.putIfNotNull(DBEntryField.PSEUDOSPECTRUM, ((PseudoSpectrum) scan).getPseudoSpectrumType());
-      entry.putIfNotNull(DBEntryField.MS_LEVEL, ((PseudoSpectrum) scan).getMSLevel());
     }
     addChimericMs1PrecursorResults(entry, chimeric); // done after all so that name may be changed
     return entry;

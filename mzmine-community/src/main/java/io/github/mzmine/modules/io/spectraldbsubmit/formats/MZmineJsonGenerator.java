@@ -44,10 +44,10 @@ import io.github.mzmine.parameters.parametertypes.IntensityNormalizer;
 import io.github.mzmine.util.io.SemverVersionReader;
 import io.github.mzmine.util.spectraldb.entry.DBEntryField;
 import io.github.mzmine.util.spectraldb.entry.SpectralLibraryEntry;
-import jakarta.json.*;
 
 import java.util.List;
 
+import jakarta.json.*;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -199,6 +199,12 @@ public class MZmineJsonGenerator {
     String version = String.valueOf(SemverVersionReader.getMZmineVersion());
     json.add(DBEntryField.SOFTWARE.getMZmineJsonID(), "mzmine-" + version);
 
+    DataPoint[] dps = entry.getDataPoints();
+    json.add(DBEntryField.NUM_PEAKS.getMZmineJsonID(), dps.length);
+
+    // add data points array
+    json.add("peaks", genJSONData(dps, normalizer));
+
     if (extra != null) {
         json.addAll(extra);
     }
@@ -219,18 +225,8 @@ public class MZmineJsonGenerator {
         default -> json.add(id, value.toString());
       }
     }
-    var polarity = entry.getPolarity();
-    if (polarity.isDefined()) {
-      json.add(DBEntryField.POLARITY.getMZmineJsonID(), polarity.toString());
-    }
 
-    DataPoint[] dps = entry.getDataPoints();
-    json.add(DBEntryField.NUM_PEAKS.getMZmineJsonID(), dps.length);
-
-    // add data points array
-    json.add("peaks", genJSONData(dps, normalizer));
-
-    return json.build().toString();
+    return json.build().toString().replaceAll("\\r\\n|\\r|\\n", "");
   }
 
   private static JsonArray listToJsonArray(final List<?> list) {

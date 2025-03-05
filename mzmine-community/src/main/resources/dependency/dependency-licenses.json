@@ -1982,7 +1982,7 @@
         },
         {
             "moduleName": "org.eclipse.parsson:jakarta.json",
-            "moduleVersion": "1.1.0",
+            "moduleVersion": "1.1.6",
             "moduleUrls": [
                 "https://www.eclipse.org"
             ],

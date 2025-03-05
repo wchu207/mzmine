@@ -31,6 +31,8 @@ import io.github.mzmine.datamodel.DataPoint;
 import io.github.mzmine.datamodel.MassSpectrum;
 import io.github.mzmine.datamodel.PseudoSpectrum;
 import io.github.mzmine.datamodel.Scan;
+import io.github.mzmine.datamodel.featuredata.IonTimeSeries;
+import io.github.mzmine.datamodel.featuredata.impl.SimpleIonTimeSeries;
 import io.github.mzmine.datamodel.features.*;
 import io.github.mzmine.datamodel.features.types.annotations.RIScaleType;
 import io.github.mzmine.datamodel.features.types.numbers.AreaType;
@@ -76,13 +78,9 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import jakarta.json.Json;
-import jakarta.json.JsonArray;
-import jakarta.json.JsonObjectBuilder;
-import jakarta.json.JsonReader;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.json.JSONObject;
+import jakarta.json.*;
 
 public class ExportScansFeatureTask extends AbstractFeatureListTask {
 
@@ -290,6 +288,30 @@ public class ExportScansFeatureTask extends AbstractFeatureListTask {
     }
   }
 
+  private JsonObject scanToJson(Scan scan) {
+    JsonObjectBuilder map = Json.createObjectBuilder();
+    map.add("ms_level", scan.getMSLevel());
+    map.add("rt", scan.getRetentionTime());
+    map.add("scan_no", scan.getScanNumber());
+    map.add("spectrum_type", scan.getSpectrumType().toString());
+    map.add("polarity", scan.getPolarity().toString());
+    map.add("scan_definition", scan.getScanDefinition());
+    map.add("mz_range", Json.createArrayBuilder().add(scan.getScanningMZRange().lowerEndpoint()).add(scan.getScanningMZRange().upperEndpoint()).build());
+
+    JsonArrayBuilder intensityArrayBuilder = Json.createArrayBuilder();
+    JsonArrayBuilder mzArrayBuilder = Json.createArrayBuilder();
+    DataPoint[] dps = ScanUtils.extractDataPoints(scan);
+    for (DataPoint dp : dps) {
+      intensityArrayBuilder.add(dp.getIntensity());
+      mzArrayBuilder.add(dp.getMZ());
+    }
+
+    map.add("intensity_list", intensityArrayBuilder.build());
+    map.add("mz_list", mzArrayBuilder.build());
+
+    return map.build();
+  }
+
   private void exportRow(final FeatureListRow row) throws IOException {
     // get all fragment scans as entries to decide whether to export MS1 or not
     final List<SpectralLibraryEntry> fragmentScans = prepareFragmentScans(row);
@@ -314,7 +336,16 @@ public class ExportScansFeatureTask extends AbstractFeatureListTask {
       exportScan(ms1Writer, ms1FileNameWithoutExtension, ms1, null);
     }
 
+    IonTimeSeries ions = row.getBestFeature().getFeatureData();
+    JsonArrayBuilder mz_list = Json.createArrayBuilder();
+    JsonArrayBuilder intensity_list = Json.createArrayBuilder();
+    for (int i = 0; i < ions.getNumberOfValues(); i++) {
+      mz_list.add(ions.getMZ(i));
+      intensity_list.add(ions.getIntensity(i));
+    }
+
     JsonObjectBuilder map = Json.createObjectBuilder();
+    map.add("row_id", row.getID());
     map.add("mz", row.getAverageMZ());
     map.add("rt_range", Json.createArrayBuilder().add(row.get(RTRangeType.class).lowerEndpoint()).add(row.get(RTRangeType.class).upperEndpoint()).build());
     map.add("mz_range", Json.createArrayBuilder().add(row.getMZRange().lowerEndpoint()).add(row.getMZRange().upperEndpoint()).build());
@@ -322,9 +353,20 @@ public class ExportScansFeatureTask extends AbstractFeatureListTask {
     map.add("area", row.get(AreaType.class));
     map.add("height", row.get(HeightType.class));
     map.add("status", row.getBestFeature().getFeatureStatus().toString());
-
     map.add("ri_scale", row.getBestFeature().getRIScale() != null ? row.getBestFeature().getRIScale() : "");
-    map.add("scan_definition", row.getBestFeature().getRepresentativeScan().getScanDefinition());
+    map.add("best_scan_no", row.getBestFeature().getRepresentativeScan().getScanNumber());
+    map.add("mz_list", mz_list.build());
+    map.add("intensity_list", intensity_list.build());
+    map.add("ms_level", row.getBestFeature().getMostIntenseFragmentScan().getMSLevel());
+    map.add("scan_definition", row.getBestFeature().getMostIntenseFragmentScan().getScanDefinition());
+
+    JsonArrayBuilder scans = Json.createArrayBuilder();
+
+    List<JsonObject> scanObjs = row.getBestFeature().getScanNumbers().parallelStream().map(this::scanToJson).toList();
+    for (JsonObject scanObj : scanObjs) {
+      scans.add(scanObj);
+    }
+    map.add("scans", scans.build());
     // export MS2 scans
     for (final SpectralLibraryEntry msn : fragmentScans) {
       exportScan(msnWriter, msnFileNameWithoutExtension, msn, map);

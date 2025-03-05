@@ -33,12 +33,14 @@ import io.github.mzmine.datamodel.*;
 import io.github.mzmine.datamodel.featuredata.impl.SimpleIonTimeSeries;
 import io.github.mzmine.datamodel.features.*;
 import io.github.mzmine.datamodel.features.types.DataType;
-import io.github.mzmine.datamodel.features.types.numbers.IntensityRangeType;
-import io.github.mzmine.datamodel.features.types.numbers.MZRangeType;
-import io.github.mzmine.datamodel.features.types.numbers.RTRangeType;
+import io.github.mzmine.datamodel.features.types.DetectionType;
+import io.github.mzmine.datamodel.features.types.annotations.RIScaleType;
+import io.github.mzmine.datamodel.features.types.numbers.*;
 import io.github.mzmine.datamodel.impl.SimpleDataPoint;
 import io.github.mzmine.datamodel.impl.SimpleFeatureIdentity;
 import io.github.mzmine.datamodel.impl.SimplePseudoSpectrum;
+import io.github.mzmine.datamodel.impl.SimpleScan;
+import io.github.mzmine.datamodel.impl.masslist.ScanPointerMassList;
 import io.github.mzmine.datamodel.msms.MsMsInfo;
 import io.github.mzmine.main.MZmineCore;
 import io.github.mzmine.modules.visualization.spectra.simplespectra.datapointprocessing.datamodel.MSLevel;
@@ -119,7 +121,9 @@ public class JSONImportTask extends AbstractTask {
           boolean success = initializeFeatureList(rawDataFile, this.storage);
           if (success) {
             List<ModularFeatureListRow> rows = lines.parallelStream().map(this::parseLine).toList();
-            // Add the new feature list to the project
+            for (var row : rows) {
+              featureList.addRow(row);
+            }
             project.addFeatureList(featureList);
           }
         }
@@ -142,55 +146,143 @@ public class JSONImportTask extends AbstractTask {
   private boolean initializeFeatureList(RawDataFile rawDataFile, MemoryMapStorage storage) {
     try {
       featureList = new ModularFeatureList(rawDataFile.getName(), storage, rawDataFile);
+      featureList.addFeatureType(new DetectionType());
+      featureList.addFeatureType(new MZType());
+      featureList.addFeatureType(new MZRangeType());
+      featureList.addFeatureType(new RTType());
+      featureList.addFeatureType(new RTRangeType());
+
+      featureList.addFeatureType(new HeightType());
+      featureList.addFeatureType(new AreaType());
+
+      featureList.addFeatureType(new IntensityRangeType());
+      featureList.addFeatureType(new FwhmType());
+      featureList.addFeatureType(new TailingFactorType());
+      featureList.addFeatureType(new AsymmetryFactorType());
+      featureList.addFeatureType(new FragmentScanNumbersType());
+
+      featureList.addFeatureType(new RIType());
+      featureList.addFeatureType(new RIMaxType());
+      featureList.addFeatureType(new RIMinType());
+      featureList.addFeatureType(new RIDiffType());
       return true;
     } catch (Exception e) {
       return false;
     }
   }
+
   private ModularFeatureListRow parseLine(String line) {
     try {
       JSONObject rowAsJSON = new JSONObject(line);
+      int rowId = rowAsJSON.getInt("row_id");
 
-      List<Double> mzList = new ArrayList<Double>();
-      List <Double> intensityList = new ArrayList<Double>();
-      JSONArray peaksJSON = rowAsJSON.getJSONArray("peaks");
-      for (int i = 0; i < peaksJSON.length(); i++) {
-        mzList.add((peaksJSON.getJSONArray(i).getDouble(0)));
-        intensityList.add((peaksJSON.getJSONArray(i).getDouble(1)));
+      JSONArray scanJSONArray = rowAsJSON.getJSONArray("scans");
+      List<JSONObject> scanObjs = new ArrayList<JSONObject>();
+      for (int i = 0; i < scanJSONArray.length(); i++) {
+        if (scanJSONArray.getJSONObject(i).getInt("scan_no") != -1) {
+          scanObjs.add(scanJSONArray.getJSONObject(i));
+        }
       }
 
-      int msLevel = rowAsJSON.getInt("ms_level");
-      double rt = rowAsJSON.getDouble("rt");
-
-      PolarityType polarity = PolarityType.parseFromString(rowAsJSON.getString("polarity"));
-      FeatureStatus status = FeatureStatus.valueOf(rowAsJSON.getString("status"));
-      String scanDefinition = rowAsJSON.getString("scan_definition");
       PseudoSpectrumType pseudoType = PseudoSpectrumType.valueOf(rowAsJSON.getString("pseudospectrum"));
+      Scan fragScan = parseFragmentScan(rowAsJSON, pseudoType);
 
-      Scan scan = new SimplePseudoSpectrum(rawDataFile, msLevel, (float) rt, null, Doubles.toArray(mzList), Doubles.toArray(intensityList), polarity, scanDefinition, pseudoType);
+      List<Scan> scans = new ArrayList<>(scanObjs.parallelStream().map(this::parseScan).toList());
+      FeatureStatus status = FeatureStatus.valueOf(rowAsJSON.getString("status"));
 
-      SimpleIonTimeSeries ions = new SimpleIonTimeSeries(storage, Doubles.toArray(mzList), Doubles.toArray(intensityList), List.of(scan));
-      ModularFeature feature = new ModularFeature(featureList, rawDataFile, ions, status);
-
+      double rt = rowAsJSON.getDouble("rt");
       double mz = rowAsJSON.getDouble("mz");
-      double height = rowAsJSON.getDouble("height");
       double area = rowAsJSON.getDouble("area");
+      double height = rowAsJSON.getDouble("height");
+
+
+      JSONArray mzJSONArray = rowAsJSON.getJSONArray("mz_list");
+      JSONArray intensityJSONArray = rowAsJSON.getJSONArray("intensity_list");
+
+      List<Double> mzList = new ArrayList<Double>();
+      List<Double> intensityList = new ArrayList<Double>();
+      for (int i = 0; i < mzJSONArray.length(); i++) {
+        mzList.add(mzJSONArray.getDouble(i));
+        intensityList.add(intensityJSONArray.getDouble(i));
+      }
+
 
       JSONArray rtRangeArray = rowAsJSON.getJSONArray("rt_range");
       Range<Float> rtRange = Range.closed(rtRangeArray.getFloat(0), rtRangeArray.getFloat(1));
-      feature.set(RTRangeType.class, rtRange);
 
       JSONArray mzRangeArray = rowAsJSON.getJSONArray("mz_range");
       Range<Double> mzRange = Range.closed(mzRangeArray.getDouble(0), mzRangeArray.getDouble(1));
-      feature.set(MZRangeType.class, mzRange);
 
       JSONArray intensityRangeArray = rowAsJSON.getJSONArray("intensity_range");
       Range<Float> intensityRange = Range.closed(intensityRangeArray.getFloat(0), intensityRangeArray.getFloat(1));
-      feature.set(IntensityRangeType.class, intensityRange);
-      return null;
+      int bestScanNumber = rowAsJSON.getInt("best_scan_no");
+
+      Scan representativeScan = null;
+      for (Scan scan : scans) {
+        if (scan.getScanNumber() == bestScanNumber) {
+          representativeScan = scan;
+        }
+      }
+
+
+      ModularFeature feature = new ModularFeature(featureList, rawDataFile, mz, (float) rt, (float) height, (float) area,
+          scans, Doubles.toArray(mzList), Doubles.toArray(intensityList), status,  representativeScan, List.of(fragScan),
+          rtRange, mzRange, intensityRange);
+
+      if (rowAsJSON.has("ri")) {
+        feature.set(RIType.class, rowAsJSON.getInt("ri"));
+        feature.set(RIScaleType.class, rowAsJSON.getString("ri_scale"));
+      }
+
+      return new ModularFeatureListRow(featureList, rowId, feature);
     } catch (Exception e) {
       return null;
     }
+  }
+
+  private Scan parseScan(JSONObject scanAsJSON) {
+    int scanNumber = scanAsJSON.getInt("scan_no");
+    int msLevel = scanAsJSON.getInt("ms_level");
+    String scanDefinition = scanAsJSON.getString("scan_definition");
+    float rt = scanAsJSON.getFloat("rt");
+    PolarityType polarity = PolarityType.parseFromString(scanAsJSON.getString("polarity"));
+    MassSpectrumType spectrum = MassSpectrumType.valueOf(scanAsJSON.getString("spectrum_type"));
+    JSONArray scanJSONArray = scanAsJSON.getJSONArray("mz_range");
+    Range<Double> scanRange = Range.closed(scanJSONArray.getDouble(0), scanJSONArray.getDouble(1));
+
+    List<Double> mzList = new ArrayList<>();
+    List<Double> intensityList = new ArrayList<>();
+
+    JSONArray mzJsonArray = scanAsJSON.getJSONArray("mz_list");
+    JSONArray intensityJsonArray = scanAsJSON.getJSONArray("intensity_list");
+
+    for (int i = 0; i < mzJsonArray.length(); i++) {
+      mzList.add(mzJsonArray.getDouble(i));
+      intensityList.add(intensityJsonArray.getDouble(i));
+    }
+    SimpleScan scan = new SimpleScan(this.rawDataFile, scanNumber, msLevel, rt, null, Doubles.toArray(mzList), Doubles.toArray(intensityList), spectrum, polarity, scanDefinition, scanRange);
+    scan.addMassList(new ScanPointerMassList(scan));
+    return scan;
+  }
+
+  private Scan parseFragmentScan(JSONObject rowJSON, PseudoSpectrumType pseudoSpectrumType) {
+    int msLevel = rowJSON.getInt("ms_level");
+    String scanDefinition = rowJSON.getString("scan_definition");
+    float rt = rowJSON.getFloat("rt");
+    PolarityType polarity = PolarityType.parseFromString(rowJSON.getString("polarity"));
+
+    List<Double> mzList = new ArrayList<>();
+    List<Double> intensityList = new ArrayList<>();
+
+    JSONArray peaks = rowJSON.getJSONArray("peaks");
+    for (int i = 0; i < peaks.length(); i++) {
+      mzList.add(peaks.getJSONArray(i).getDouble(0));
+      intensityList.add(peaks.getJSONArray(i).getDouble(1));
+    }
+
+    SimplePseudoSpectrum scan = new SimplePseudoSpectrum(rawDataFile, msLevel, rt, null, Doubles.toArray(mzList), Doubles.toArray(intensityList), polarity, scanDefinition, pseudoSpectrumType);
+    scan.addMassList(new ScanPointerMassList(scan));
+    return scan;
   }
 
 }
