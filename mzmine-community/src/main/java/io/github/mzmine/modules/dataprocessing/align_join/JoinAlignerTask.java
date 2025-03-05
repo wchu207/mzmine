@@ -33,7 +33,6 @@ import io.github.mzmine.datamodel.features.ModularFeatureList;
 import io.github.mzmine.modules.MZmineModule;
 import io.github.mzmine.modules.dataprocessing.align_common.BaseFeatureListAligner;
 import io.github.mzmine.modules.dataprocessing.align_common.FeatureCloner;
-import io.github.mzmine.modules.dataprocessing.align_common.FeatureCloner.ReuseOriginalFeature;
 import io.github.mzmine.modules.dataprocessing.align_common.FeatureCloner.SimpleFeatureCloner;
 import io.github.mzmine.parameters.ParameterSet;
 import io.github.mzmine.parameters.parametertypes.OriginalFeatureListHandlingParameter.OriginalFeatureListOption;
@@ -62,7 +61,6 @@ public class JoinAlignerTask extends AbstractFeatureListTask {
   private final MZmineProject project;
   private final String featureListName;
   private final ParameterSet parameters;
-  private final boolean reuseOriginalFeatures;
   private ModularFeatureList alignedFeatureList;
   private final OriginalFeatureListOption handleOriginal;
   private BaseFeatureListAligner listAligner;
@@ -73,7 +71,6 @@ public class JoinAlignerTask extends AbstractFeatureListTask {
     super(storage, moduleCallDate, parameters, moduleClass);
     this.project = project;
     handleOriginal = parameters.getValue(JoinAlignerParameters.handleOriginal);
-    reuseOriginalFeatures = handleOriginal != OriginalFeatureListOption.KEEP;
     featureListName = parameters.getValue(JoinAlignerParameters.peakListName);
 
     featureLists = Arrays.stream(
@@ -104,7 +101,7 @@ public class JoinAlignerTask extends AbstractFeatureListTask {
         () -> "Running parallel join aligner on " + featureLists.size() + " feature lists.");
 
     listAligner = createAligner(this, getMemoryMapStorage(), parameters, featureLists,
-        featureListName, reuseOriginalFeatures);
+        featureListName);
     alignedFeatureList = listAligner.alignFeatureLists(FeatureListRowSorter.DEFAULT_RT);
 
     if (alignedFeatureList == null || isCanceled()) {
@@ -118,10 +115,8 @@ public class JoinAlignerTask extends AbstractFeatureListTask {
 
   public static BaseFeatureListAligner createAligner(final @Nullable Task parentTask,
       final @Nullable MemoryMapStorage storage, final ParameterSet parameters,
-      final List<FeatureList> featureLists, final String featureListName,
-      final boolean reuseOriginalFeatures) {
-    FeatureCloner featureCloner =
-        reuseOriginalFeatures ? new ReuseOriginalFeature() : new SimpleFeatureCloner();
+      final List<FeatureList> featureLists, final String featureListName) {
+    FeatureCloner featureCloner = new SimpleFeatureCloner();
     // create the row aligner that handles the scoring
     var rowAligner = new JoinRowAlignScorer(parameters);
     return new BaseFeatureListAligner(parentTask, featureLists, featureListName, storage,

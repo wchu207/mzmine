@@ -348,9 +348,7 @@ public interface Feature {
     return null;
   }
 
-  @Nullable FeatureList getFeatureList();
-
-  void setFeatureList(@NotNull FeatureList featureList);
+  @NotNull FeatureList getFeatureList();
 
   int getNumberOfDataPoints();
 
