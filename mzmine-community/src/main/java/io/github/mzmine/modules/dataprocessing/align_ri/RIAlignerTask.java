@@ -95,8 +95,7 @@ public class RIAlignerTask extends AbstractFeatureListTask {
     logger.info(() -> "Running parallel GC aligner on " + featureLists.size() + " feature lists.");
 
     var mzTolerance = parameters.getValue(RIAlignerParameters.MZ_TOLERANCE);
-    FeatureCloner featureCloner = new ExtractMzMismatchFeatureCloner(mzTolerance,
-        reuseOriginalFeatures);
+    FeatureCloner featureCloner = new ExtractMzMismatchFeatureCloner(mzTolerance);
     // create the row aligner that handles the scoring
     var rowAligner = new RIRowAlignScorer(parameters);
     listAligner = new BaseFeatureListAligner(this, featureLists, featureListName,
