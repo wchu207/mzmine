@@ -496,6 +496,7 @@ public interface FeatureListRow extends ModularDataModel {
 
   void addSpectralLibraryMatches(List<SpectralDBAnnotation> matches);
 
+
   @Nullable Range<Float> getMobilityRange();
 
   /**

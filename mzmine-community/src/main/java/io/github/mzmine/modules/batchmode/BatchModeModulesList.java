@@ -116,6 +116,7 @@ import io.github.mzmine.modules.dataprocessing.id_online_reactivity.OnlineLcReac
 import io.github.mzmine.modules.dataprocessing.id_precursordbsearch.PrecursorDBSearchModule;
 import io.github.mzmine.modules.dataprocessing.id_spectral_library_match.SpectralLibrarySearchModule;
 import io.github.mzmine.modules.dataprocessing.id_spectral_library_match.library_to_featurelist.SpectralLibraryToFeatureListModule;
+import io.github.mzmine.modules.dataprocessing.id_spectral_library_match_custom.CustomSpectralLibrarySearchModule;
 import io.github.mzmine.modules.dataprocessing.norm_linear.LinearNormalizerModule;
 import io.github.mzmine.modules.dataprocessing.norm_ri.RICalculationModule;
 import io.github.mzmine.modules.dataprocessing.norm_rtcalibration.RTCorrectionModule;
@@ -226,6 +227,7 @@ public class BatchModeModulesList {
 //      WatersRawImportModule.class, //
           ZipImportModule.class, //
           SpectralLibraryImportModule.class, //
+          CustomSpectralLibrarySearchModule.class, //
           SpectralLibraryToFeatureListModule.class, //
 
           /*

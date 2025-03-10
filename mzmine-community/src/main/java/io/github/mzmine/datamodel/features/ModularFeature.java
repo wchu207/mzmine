@@ -45,19 +45,18 @@ import io.github.mzmine.datamodel.features.types.IsotopePatternType;
 import io.github.mzmine.datamodel.features.types.MobilityUnitType;
 import io.github.mzmine.datamodel.features.types.RawFileType;
 import io.github.mzmine.datamodel.features.types.annotations.RIScaleType;
+import io.github.mzmine.datamodel.features.types.annotations.SpectralLibraryMatchesType;
 import io.github.mzmine.datamodel.features.types.numbers.*;
 import io.github.mzmine.datamodel.impl.SimpleDataPoint;
 import io.github.mzmine.modules.tools.qualityparameters.QualityParameters;
 import io.github.mzmine.util.DataPointUtils;
 import io.github.mzmine.util.FeatureUtils;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Set;
+
+import java.util.*;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
+
+import io.github.mzmine.util.spectraldb.entry.SpectralDBAnnotation;
 import javafx.collections.FXCollections;
 import javafx.collections.MapChangeListener;
 import javafx.collections.ObservableMap;
@@ -480,6 +479,31 @@ public class ModularFeature implements Feature, ModularDataModel {
 
   public IonTimeSeries<? extends Scan> getFeatureData() {
     return get(FeatureDataType.class);
+  }
+
+  @Override
+  public void addSpectralLibraryMatches(List<SpectralDBAnnotation> matches) {
+    synchronized (getMap()) {
+      List<SpectralDBAnnotation> old = get(SpectralLibraryMatchesType.class);
+      if (old == null) {
+        old = new ArrayList<>();
+      }
+      old.addAll(matches);
+      set(SpectralLibraryMatchesType.class, old);
+    }
+  }
+
+  @Override
+  public void setSpectralLibraryMatch(List<SpectralDBAnnotation> matches) {
+    synchronized (getMap()) {
+      set(SpectralLibraryMatchesType.class, matches);
+    }
+  }
+
+  @Override
+  public @NotNull List<SpectralDBAnnotation> getSpectralLibraryMatches() {
+    List<SpectralDBAnnotation> matches = get(SpectralLibraryMatchesType.class);
+    return matches == null ? List.of() : matches;
   }
 
   @Override

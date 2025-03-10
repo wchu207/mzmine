@@ -38,6 +38,8 @@ import io.github.mzmine.datamodel.featuredata.IonTimeSeries;
 import io.github.mzmine.util.scans.FragmentScanSorter;
 import java.util.ArrayList;
 import java.util.List;
+
+import io.github.mzmine.util.spectraldb.entry.SpectralDBAnnotation;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -359,6 +361,22 @@ public interface Feature {
     throw new UnsupportedOperationException(
         "Get feature data is not implemented for this sub class. Use ModularFeature or implement");
   }
+
+  /**
+   * Set and override the list of matches
+   *
+   * @param matches new list of matches
+   */
+  void setSpectralLibraryMatch(List<SpectralDBAnnotation> matches);
+
+  /**
+   * List of library matches sorted from best (index 0) to last match
+   *
+   * @return list of library matches or an empty list
+   */
+  @NotNull List<SpectralDBAnnotation> getSpectralLibraryMatches();
+
+  void addSpectralLibraryMatches(List<SpectralDBAnnotation> matches);
 
   /**
    * The FeatureListRow that contains this feature

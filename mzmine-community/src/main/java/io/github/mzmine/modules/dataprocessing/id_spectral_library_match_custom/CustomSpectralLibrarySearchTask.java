@@ -23,38 +23,41 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
-package io.github.mzmine.modules.dataprocessing.id_spectral_library_match;
+package io.github.mzmine.modules.dataprocessing.id_spectral_library_match_custom;
 
+import io.github.mzmine.datamodel.features.Feature;
 import io.github.mzmine.datamodel.features.FeatureList;
-import io.github.mzmine.datamodel.features.FeatureListRow;
 import io.github.mzmine.datamodel.features.SimpleFeatureListAppliedMethod;
 import io.github.mzmine.datamodel.features.types.DataTypes;
 import io.github.mzmine.datamodel.features.types.annotations.SpectralLibraryMatchesType;
 import io.github.mzmine.parameters.ParameterSet;
 import io.github.mzmine.taskcontrol.TaskStatus;
+import org.jetbrains.annotations.NotNull;
+
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Logger;
-import org.jetbrains.annotations.NotNull;
 
-class SpectralLibrarySearchTask extends RowsSpectralMatchTask {
+class CustomSpectralLibrarySearchTask extends CustomRowsSpectralMatchTask {
 
-  private static final Logger logger = Logger.getLogger(SpectralLibrarySearchTask.class.getName());
+  private static final Logger logger = Logger.getLogger(CustomSpectralLibrarySearchTask.class.getName());
   private final FeatureList[] featureLists;
 
-  public SpectralLibrarySearchTask(ParameterSet parameters, FeatureList[] featureLists,
-      @NotNull Instant moduleCallDate) {
+  public CustomSpectralLibrarySearchTask(ParameterSet parameters, FeatureList[] featureLists,
+                                         @NotNull Instant moduleCallDate) {
     super(parameters, combineRows(featureLists), moduleCallDate);
     this.featureLists = featureLists;
   }
 
-  public static List<FeatureListRow> combineRows(FeatureList[] featureLists) {
-    List<FeatureListRow> rows = new ArrayList<>();
+  public static List<Feature> combineRows(FeatureList[] featureLists) {
+    List<Feature> rows = new ArrayList<>();
     // add row type
     for (var flist : featureLists) {
       flist.addFeatureType(DataTypes.get(SpectralLibraryMatchesType.class));
-      rows.addAll(flist.getRows());
+      for (var raw : flist.getRawDataFiles()) {
+        rows.addAll(flist.getFeatures(raw));
+      }
     }
     return rows;
   }
@@ -65,7 +68,7 @@ class SpectralLibrarySearchTask extends RowsSpectralMatchTask {
 
     logger.info(() -> String
         .format("Spectral library matching in %d feature lists (%d rows) against libraries: %s",
-            featureLists.length, rows.size(), librariesJoined));
+            featureLists.length, features.size(), librariesJoined));
 
     // run the actual subtask
     super.run();
@@ -75,7 +78,7 @@ class SpectralLibrarySearchTask extends RowsSpectralMatchTask {
       for (var flist : featureLists) {
         flist.addDescriptionOfAppliedTask(new SimpleFeatureListAppliedMethod(
             "Spectral library matching with libraries: " + librariesJoined,
-            SpectralLibrarySearchModule.class, parameters, getModuleCallDate()));
+            CustomSpectralLibrarySearchModule.class, parameters, getModuleCallDate()));
       }
 
       setStatus(TaskStatus.FINISHED);
