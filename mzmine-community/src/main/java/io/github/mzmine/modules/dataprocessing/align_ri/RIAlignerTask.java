@@ -32,6 +32,7 @@ import io.github.mzmine.modules.MZmineModule;
 import io.github.mzmine.modules.dataprocessing.align_common.BaseFeatureListAligner;
 import io.github.mzmine.modules.dataprocessing.align_common.FeatureCloner;
 import io.github.mzmine.modules.dataprocessing.align_common.FeatureCloner.ExtractMzMismatchFeatureCloner;
+import io.github.mzmine.modules.dataprocessing.align_gc.GCConsensusAlignerPostProcessor;
 import io.github.mzmine.parameters.ParameterSet;
 import io.github.mzmine.parameters.parametertypes.OriginalFeatureListHandlingParameter.OriginalFeatureListOption;
 import io.github.mzmine.taskcontrol.AbstractFeatureListTask;
@@ -96,10 +97,12 @@ public class RIAlignerTask extends AbstractFeatureListTask {
 
     var mzTolerance = parameters.getValue(RIAlignerParameters.MZ_TOLERANCE);
     FeatureCloner featureCloner = new ExtractMzMismatchFeatureCloner(mzTolerance);
+
     // create the row aligner that handles the scoring
+    var postProcessor = new GCConsensusAlignerPostProcessor(mzTolerance);
     var rowAligner = new RIRowAlignScorer(parameters);
     listAligner = new BaseFeatureListAligner(this, featureLists, featureListName,
-        getMemoryMapStorage(), rowAligner, featureCloner, FeatureListRowSorter.DEFAULT_RI);
+        getMemoryMapStorage(), rowAligner, featureCloner, FeatureListRowSorter.DEFAULT_RI, postProcessor);
 
     alignedFeatureList = listAligner.alignFeatureLists(FeatureListRowSorter.DEFAULT_RI);
     if (alignedFeatureList == null || isCanceled()) {
@@ -119,6 +122,6 @@ public class RIAlignerTask extends AbstractFeatureListTask {
 
   @Override
   public String getTaskDescription() {
-    return "Align GC feature lists";
+    return "Align RI feature lists";
   }
 }

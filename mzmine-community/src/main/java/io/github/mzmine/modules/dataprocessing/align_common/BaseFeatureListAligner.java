@@ -46,11 +46,8 @@ import io.github.mzmine.util.FeatureListUtils;
 import io.github.mzmine.util.MemoryMapStorage;
 import io.mzio.links.MzioMZmineLinks;
 import it.unimi.dsi.fastutil.objects.Object2BooleanOpenHashMap;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.ListIterator;
-import java.util.Comparator;
+
+import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.logging.Logger;
@@ -69,6 +66,7 @@ public class BaseFeatureListAligner {
   private final String featureListName;
   private final MemoryMapStorage storage;
   private final FeatureRowAlignScorer rowAligner;
+  private final FeatureAlignmentPostProcessor postProcessor;
   private final FeatureCloner featureCloner;
   private final FeatureListRowSorter baseRowSorter;
   private final TotalFinishedItemsProgress progress = new TotalFinishedItemsProgress();
@@ -77,7 +75,7 @@ public class BaseFeatureListAligner {
   public BaseFeatureListAligner(final Task parentTask, final List<FeatureList> featureLists,
       final String featureListName, final @Nullable MemoryMapStorage storage,
       final FeatureRowAlignScorer rowAligner, final FeatureCloner featureCloner,
-      final FeatureListRowSorter baseRowSorter) {
+      final FeatureListRowSorter baseRowSorter, final @Nullable FeatureAlignmentPostProcessor postProcessor) {
 
     this.parentTask = parentTask;
     this.featureLists = featureLists;
@@ -86,6 +84,7 @@ public class BaseFeatureListAligner {
     this.rowAligner = rowAligner;
     this.featureCloner = featureCloner;
     this.baseRowSorter = baseRowSorter;
+    this.postProcessor = postProcessor;
   }
 
   /**
@@ -135,15 +134,12 @@ public class BaseFeatureListAligner {
           final RawDataFile dataFile = feature.getRawDataFile();
           if (!alignedRow.hasFeature(dataFile)) {
             var newFeature = featureCloner.cloneFeature(feature, alignedFeatureList, alignedRow);
-            if (newFeature.getMZ() != 0) {
-              // For GC-MS, ExtractMzMismatchFeatureCloner may search in raw data files
-              // if no masses are found in range, MZ = 0 and we skip this
-
-              // Otherwise, add feature to aligned row, skip this file for it in the future
-              alignedRow.addFeature(dataFile, newFeature, true);
-              alignedRowsMap.put(row, true);
-              alignedRows.getAndIncrement();
-            }
+            // very important to not trigger row bindings - GC-EI currently has features with different mz
+            // this is resolved later by a GCConsensunsPostProcessor
+            // row bindings are then updated at last
+            alignedRow.addFeature(dataFile, newFeature, false);
+            alignedRowsMap.put(row, true);
+            alignedRows.getAndIncrement();
           }
         }
       }
@@ -220,19 +216,24 @@ public class BaseFeatureListAligner {
       iteration++;
     }
 
-    // sort and reset IDs
-    // handling of null values is mainly for RI
-    alignedFeatureList.getRows().sort(Comparator.nullsLast(finalOrdering));
-    FeatureListUtils.renumberIDs(alignedFeatureList);
+    // apply special handling - like GC-EI consensus feature finding
+    if (postProcessor != null) {
+      postProcessor.handlePostAlignment(alignedFeatureList);
+    }
 
     // update row bindings
     alignedFeatureList.parallelStream().filter(row -> row.getNumberOfFeatures() > 1)
         .forEach(FeatureListRow::applyRowBindings);
 
+    // sort and reset IDs
+    // handling of null values is mainly for RI
+    alignedFeatureList.getRows().sort(Comparator.nullsLast(finalOrdering));
+    FeatureListUtils.renumberIDs(alignedFeatureList);
+
+
     // score alignment by the number of features that fall within the mz, RT, mobility range
     // do not apply all the advanced filters to keep it simple
     rowAligner.calculateAlignmentScores(alignedFeatureList, featureLists);
-
 
     return alignedFeatureList;
   }
