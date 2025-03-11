@@ -71,7 +71,6 @@ public class CustomModuleTask extends AbstractTask {
       rows.addAll(flist.getRows());
     }
 
-    SpectralLibraryMatchesType matchesType = DataTypes.get(SpectralLibraryMatchesType.class);
     for (var row : rows) {
       List<SpectralDBAnnotation> matches = row.get(DataTypes.get(SpectralLibraryMatchesType.class));
       if (matches != null) {

@@ -83,7 +83,6 @@ public class SpectralLibraryMatchesType extends ListWithSubsType<SpectralDBAnnot
       new MolecularStructureType(),//
       new SmilesStructureType(),//
       new InChIStructureType(),//
-      new RIType(),
       // classifiers
       new ClassyFireSuperclassType(), new ClassyFireClassType(), new ClassyFireSubclassType(),
       new ClassyFireParentType(), new NPClassifierSuperclassType(), new NPClassifierClassType(),
@@ -274,9 +273,57 @@ public class SpectralLibraryMatchesType extends ListWithSubsType<SpectralDBAnnot
       }
 
       return null;
+    } else if (bindingType == BindingsType.LIST){
+      Map<String, Integer> matches = new LinkedHashMap<>();
+
+      for (var model : models) {
+        List<SpectralDBAnnotation> annotationsList = model.get(this);
+        if (annotationsList != null) {
+          Optional<SpectralDBAnnotation> annotation = annotationsList.stream().max(Comparator.comparing(x -> {
+            Float score = x.getScore();
+            return score != null ? score : 0;
+          }));
+
+          if (annotation.isPresent()) {
+            String name = annotation.get().getCompoundName().toLowerCase();
+            int count = 0;
+            if (matches.containsKey(name)) {
+              count = matches.get(name) + 1;
+            } else {
+              count = 1;
+            }
+            matches.put(name, count);
+          }
+        }
+      }
+
+      List<Map.Entry<String, Integer>> entries = matches.entrySet()
+          .stream()
+          .sorted(Comparator.comparing(k -> k.getValue()))
+          .toList().reversed();
+
+      List<String> ident = new LinkedList<>();
+      for (var entry : entries) {
+        for (var model : models) {
+          List<SpectralDBAnnotation> annotationsList = model.get(this);
+          if (annotationsList != null) {
+            Optional<SpectralDBAnnotation> annotation = annotationsList.stream().max(Comparator.comparing(x -> {
+              Float score = x.getScore();
+              return score != null ? score : 0;
+            }));
+            if (annotation.isPresent()) {
+              String name = annotation.get().getCompoundName();
+              if (Objects.equals(name.toLowerCase(), entry.getKey())) {
+                ident.add(String.format("%s (%d)", name, entry.getValue()));
+                break;
+              }
+            }
+          }
+        }
+      }
+      return !ident.isEmpty() ? String.join("; ", ident) : null;
     } else {
       return super.evaluateBindings(bindingType, models);
     }
-
   }
 }
