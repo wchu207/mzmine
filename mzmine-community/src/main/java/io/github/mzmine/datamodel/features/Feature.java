@@ -404,4 +404,6 @@ public interface Feature {
   default boolean hasMs2Fragmentation() {
     return !getAllMS2FragmentScans().isEmpty();
   }
+
+  boolean isMrm();
 }

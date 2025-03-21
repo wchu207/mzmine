@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2004-2024 The MZmine Development Team
+ * Copyright (c) 2004-2025 The mzmine Development Team
  *
  * Permission is hereby granted, free of charge, to any person
  * obtaining a copy of this software and associated documentation
@@ -12,7 +12,6 @@
  *
  * The above copyright notice and this permission notice shall be
  * included in all copies or substantial portions of the Software.
- *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
  * EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES
  * OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
@@ -23,22 +22,29 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
-package io.github.mzmine.gui.chartbasics.simplechart;
+package io.github.mzmine.modules.visualization.otherdetectors.integrationplot;
 
-import io.github.mzmine.gui.chartbasics.listener.RegionSelectionListener;
+import com.google.common.collect.Range;
+import io.github.mzmine.datamodel.featuredata.IntensityTimeSeries;
+import org.jetbrains.annotations.Nullable;
 
-public interface AllowsRegionSelection {
+public interface FeatureIntegratedListener {
+
+  void accept(EventType eventType, @Nullable IntensityTimeSeries newFeature,
+      @Nullable Range<Float> newIntegrationRange);
 
   /**
-   * Initializes a {@link RegionSelectionListener} and adds it to the plot. Following clicks will be
-   * added to a region. Region selection can be finished by {@link #finishPath()}.
+   * Specifies what the cause of the change of the integrated feature is.
    */
-  public void startRegion();
+  enum EventType {
+    /**
+     * Feature was integrated manually in this plot.
+     */
+    INTERNAL_CHANGE,
 
-  /**
-   * @return The {@link RegionSelectionListener} of the current selection. The path/points can be
-   * retrieved from the listener object.
-   */
-  public RegionSelectionListener finishPath();
-
+    /**
+     * The integrated feature was change by an external factor.
+     */
+    EXTERNAL_CHANGE
+  }
 }
