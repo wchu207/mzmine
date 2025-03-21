@@ -59,14 +59,15 @@ import io.github.mzmine.parameters.parametertypes.IntensityNormalizer;
 import io.github.mzmine.parameters.parametertypes.tolerances.MZTolerance;
 import io.github.mzmine.taskcontrol.AbstractFeatureListTask;
 import io.github.mzmine.util.MemoryMapStorage;
+import io.github.mzmine.util.RIRecord;
 import io.github.mzmine.util.annotations.CompoundAnnotationUtils;
 import io.github.mzmine.util.files.FileAndPathUtil;
 import io.github.mzmine.util.io.WriterOptions;
 import io.github.mzmine.util.scans.FragmentScanSelection;
 import io.github.mzmine.util.scans.ScanUtils;
-import io.github.mzmine.util.spectraldb.entry.DBEntryField;
-import io.github.mzmine.util.spectraldb.entry.SpectralLibraryEntry;
-import io.github.mzmine.util.spectraldb.entry.SpectralLibraryEntryFactory;
+import io.github.mzmine.util.scans.similarity.SpectralSimilarity;
+import io.github.mzmine.util.spectraldb.entry.*;
+
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.IOException;
@@ -312,6 +313,61 @@ public class ExportScansFeatureTask extends AbstractFeatureListTask {
     return map.build();
   }
 
+  private JsonObject spectralDBAnnotationToJson(SpectralDBAnnotation annotation) {
+    JsonObjectBuilder map = Json.createObjectBuilder();
+
+    JsonObjectBuilder similarityMap = Json.createObjectBuilder();
+    SpectralSimilarity sim = annotation.getSimilarity();
+    similarityMap.add("score", sim.getScore());
+    similarityMap.add("name", sim.getFunctionName());
+    similarityMap.add("overlap", sim.getOverlap());
+    similarityMap.add("explained_intensity", sim.getExplainedLibraryIntensity());
+    map.add("similarity", similarityMap.build());
+
+    JsonObjectBuilder entryMap = Json.createObjectBuilder();
+
+    SpectralLibraryEntry entry = annotation.getEntry();
+
+    JsonArrayBuilder intensityArrayBuilder = Json.createArrayBuilder();
+    JsonArrayBuilder mzArrayBuilder = Json.createArrayBuilder();
+    DataPoint[] dps = ScanUtils.extractDataPoints(entry);
+    entryMap.add(DBEntryField.NUM_PEAKS.getMZmineJsonID(), dps.length);
+    for (DataPoint dp : dps) {
+      intensityArrayBuilder.add(dp.getIntensity());
+      mzArrayBuilder.add(dp.getMZ());
+    }
+    entryMap.add("intensity_list", intensityArrayBuilder.build());
+    entryMap.add("mz_list", mzArrayBuilder.build());
+
+    Set<DBEntryField> stringKeys = Set.of(
+        DBEntryField.NAME,
+        DBEntryField.FORMULA,
+        DBEntryField.INSTRUMENT,
+        DBEntryField.INSTRUMENT_TYPE,
+        DBEntryField.INCHIKEY,
+        DBEntryField.MS_LEVEL,
+        DBEntryField.COMMENT
+    );
+    for (var key : stringKeys) {
+      Optional<Object> s = entry.getField(key);
+      if(s.isPresent()) {
+        entryMap.add(key.getMZmineJsonID(), s.get().toString());
+      }
+    }
+    RIRecord ri = entry.getOrElse(DBEntryField.RI, null);
+    if (ri != null) {
+      entryMap.add(DBEntryField.RI.getMZmineJsonID(), ri.toString());
+    }
+    Double exactMass = entry.getOrElse(DBEntryField.EXACT_MASS, null);
+    if (exactMass != null) {
+      entryMap.add(DBEntryField.EXACT_MASS.getMZmineJsonID(), exactMass);
+    }
+
+    map.add("entry", entryMap.build());
+
+    return map.build();
+  }
+
   private void exportRow(final FeatureListRow row) throws IOException {
     // get all fragment scans as entries to decide whether to export MS1 or not
     final List<SpectralLibraryEntry> fragmentScans = prepareFragmentScans(row);
@@ -359,6 +415,15 @@ public class ExportScansFeatureTask extends AbstractFeatureListTask {
     map.add("intensity_list", intensity_list.build());
     map.add("ms_level", row.getBestFeature().getMostIntenseFragmentScan().getMSLevel());
     map.add("scan_definition", row.getBestFeature().getMostIntenseFragmentScan().getScanDefinition());
+    if (!row.getBestFeature().getSpectralLibraryMatches().isEmpty()) {
+      SpectralDBAnnotation bestMatch = row.getBestFeature().getSpectralLibraryMatches().stream()
+          .filter(annotation -> annotation.getScore() != null)
+          .max(Comparator.comparing(SpectralDBAnnotation::getScore))
+          .orElse(null);
+      if (bestMatch != null) {
+        map.add("library_match", spectralDBAnnotationToJson(bestMatch));
+      }
+    }
 
     JsonArrayBuilder scans = Json.createArrayBuilder();
 
