@@ -72,10 +72,12 @@ public class CustomModuleTask extends AbstractTask {
     }
 
     for (var row : rows) {
-      List<SpectralDBAnnotation> matches = row.get(DataTypes.get(SpectralLibraryMatchesType.class));
-      if (matches != null) {
-        for (var match : matches) {
-          match.getEntry().putIfNotNull(DBEntryField.COMMENT, match.getEntry().getLibraryName());
+      for (var feature : row.getFeatures()) {
+        List<SpectralDBAnnotation> matches = feature.get(DataTypes.get(SpectralLibraryMatchesType.class));
+        if (matches != null) {
+          for (var match : matches) {
+            match.getEntry().putIfNotNull(DBEntryField.COMMENT, match.getEntry().getLibraryName());
+          }
         }
       }
     }

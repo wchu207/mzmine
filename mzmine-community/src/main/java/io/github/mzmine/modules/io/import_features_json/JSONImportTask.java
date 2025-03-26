@@ -27,23 +27,16 @@ package io.github.mzmine.modules.io.import_features_json;
 
 import com.google.common.collect.Range;
 import com.google.common.primitives.Doubles;
-import de.isas.mztab2.io.MzTabFileParser;
-import de.isas.mztab2.model.*;
 import io.github.mzmine.datamodel.*;
-import io.github.mzmine.datamodel.featuredata.impl.SimpleIonTimeSeries;
 import io.github.mzmine.datamodel.features.*;
 import io.github.mzmine.datamodel.features.types.DataType;
 import io.github.mzmine.datamodel.features.types.DetectionType;
+import io.github.mzmine.datamodel.features.types.annotations.CustomSpectralLibraryMatchesSummaryType;
 import io.github.mzmine.datamodel.features.types.annotations.RIScaleType;
 import io.github.mzmine.datamodel.features.types.numbers.*;
-import io.github.mzmine.datamodel.impl.SimpleDataPoint;
-import io.github.mzmine.datamodel.impl.SimpleFeatureIdentity;
 import io.github.mzmine.datamodel.impl.SimplePseudoSpectrum;
 import io.github.mzmine.datamodel.impl.SimpleScan;
 import io.github.mzmine.datamodel.impl.masslist.ScanPointerMassList;
-import io.github.mzmine.datamodel.msms.MsMsInfo;
-import io.github.mzmine.main.MZmineCore;
-import io.github.mzmine.modules.visualization.spectra.simplespectra.datapointprocessing.datamodel.MSLevel;
 import io.github.mzmine.parameters.ParameterSet;
 import io.github.mzmine.parameters.UserParameter;
 import io.github.mzmine.parameters.parametertypes.StringParameter;
@@ -53,24 +46,29 @@ import io.github.mzmine.taskcontrol.Task;
 import io.github.mzmine.taskcontrol.TaskStatus;
 import io.github.mzmine.util.MemoryMapStorage;
 import io.github.mzmine.util.RawDataFileUtils;
+import io.github.mzmine.util.scans.similarity.SpectralSimilarity;
+import io.github.mzmine.util.spectraldb.entry.DBEntryField;
+import io.github.mzmine.util.spectraldb.entry.SpectralDBAnnotation;
+import io.github.mzmine.util.spectraldb.entry.SpectralDBEntry;
+import io.github.mzmine.util.spectraldb.entry.SpectralLibraryEntry;
 import javafx.util.Pair;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.json.JSONArray;
 import org.json.JSONObject;
+import org.json.JSONTokener;
 import uk.ac.ebi.pride.jmztab2.utils.errors.MZTabErrorList;
 import uk.ac.ebi.pride.jmztab2.utils.errors.MZTabErrorType;
 
 import java.io.DataInputStream;
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileReader;
 import java.math.BigDecimal;
 import java.nio.file.Files;
 import java.time.Instant;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
+import java.util.stream.StreamSupport;
 
 public class JSONImportTask extends AbstractTask {
 
@@ -111,20 +109,21 @@ public class JSONImportTask extends AbstractTask {
   @Override
   public void run() {
     setStatus(TaskStatus.PROCESSING);
+    List<Scan> selectedScans = new ArrayList<>();
     try {
-
-      List<String> lines = Files.readAllLines(inputFile.toPath());
-
-      if (!lines.isEmpty()) {
-        rawDataFile = project.getDataFileByName((new JSONObject(lines.get(0))).get("raw_file_name").toString());
+      JSONArray rowsObjs = new JSONArray(new JSONTokener(new FileReader(inputFile)));
+      if (!rowsObjs.isEmpty()) {
+        rawDataFile = project.getDataFileByName(rowsObjs.getJSONObject(0).getString("raw_file_name"));
         if (rawDataFile != null) {
           boolean success = initializeFeatureList(rawDataFile, this.storage);
           if (success) {
-            List<ModularFeatureListRow> rows = lines.parallelStream().map(this::parseLine).toList();
+            List<ModularFeatureListRow> rows = StreamSupport.stream(rowsObjs.spliterator(), false).map(this::parseLine).toList();
             for (var row : rows) {
               featureList.addRow(row);
+              row.getFeatures().stream().flatMap(f -> f.getScanNumbers().stream()).forEach(selectedScans::add);
             }
             project.addFeatureList(featureList);
+            featureList.setSelectedScans(rawDataFile, selectedScans);
           }
         }
 
@@ -165,76 +164,118 @@ public class JSONImportTask extends AbstractTask {
       featureList.addFeatureType(new RIMaxType());
       featureList.addFeatureType(new RIMinType());
       featureList.addFeatureType(new RIDiffType());
+
+      featureList.addFeatureType(new CustomSpectralLibraryMatchesSummaryType());
       return true;
     } catch (Exception e) {
       return false;
     }
   }
 
-  private ModularFeatureListRow parseLine(String line) {
+  private ModularFeatureListRow parseLine(Object rowObj) {
     try {
-      JSONObject rowAsJSON = new JSONObject(line);
-      int rowId = rowAsJSON.getInt("row_id");
-
-      JSONArray scanJSONArray = rowAsJSON.getJSONArray("scans");
-      List<JSONObject> scanObjs = new ArrayList<JSONObject>();
-      for (int i = 0; i < scanJSONArray.length(); i++) {
-        if (scanJSONArray.getJSONObject(i).getInt("scan_no") != -1) {
-          scanObjs.add(scanJSONArray.getJSONObject(i));
+      if (rowObj instanceof JSONObject rowAsJSON) {
+        int rowId = rowAsJSON.getInt("row_id");
+        JSONArray scanJSONArray = rowAsJSON.getJSONArray("scans");
+        List<JSONObject> scanObjs = new ArrayList<JSONObject>();
+        for (int i = 0; i < scanJSONArray.length(); i++) {
+          if (scanJSONArray.getJSONObject(i).getInt("scan_no") != -1) {
+            scanObjs.add(scanJSONArray.getJSONObject(i));
+          }
         }
-      }
 
-      PseudoSpectrumType pseudoType = PseudoSpectrumType.valueOf(rowAsJSON.getString("pseudospectrum"));
-      Scan fragScan = parseFragmentScan(rowAsJSON, pseudoType);
+        PseudoSpectrumType pseudoType = PseudoSpectrumType.valueOf(rowAsJSON.getString("pseudospectrum"));
+        Scan fragScan = parseFragmentScan(rowAsJSON, pseudoType);
 
-      List<Scan> scans = new ArrayList<>(scanObjs.parallelStream().map(this::parseScan).toList());
-      FeatureStatus status = FeatureStatus.valueOf(rowAsJSON.getString("status"));
+        List<Scan> scans = new ArrayList<>(scanObjs.parallelStream().map(this::parseScan).sorted(Comparator.comparing(scan -> scan.getRetentionTime())).toList());
+        FeatureStatus status = FeatureStatus.valueOf(rowAsJSON.getString("status"));
 
-      double rt = rowAsJSON.getDouble("rt");
-      double mz = rowAsJSON.getDouble("mz");
-      double area = rowAsJSON.getDouble("area");
-      double height = rowAsJSON.getDouble("height");
-
-
-      JSONArray mzJSONArray = rowAsJSON.getJSONArray("mz_list");
-      JSONArray intensityJSONArray = rowAsJSON.getJSONArray("intensity_list");
-
-      List<Double> mzList = new ArrayList<Double>();
-      List<Double> intensityList = new ArrayList<Double>();
-      for (int i = 0; i < mzJSONArray.length(); i++) {
-        mzList.add(mzJSONArray.getDouble(i));
-        intensityList.add(intensityJSONArray.getDouble(i));
-      }
+        double rt = rowAsJSON.getDouble("rt");
+        double mz = rowAsJSON.getDouble("mz");
+        double area = rowAsJSON.getDouble("area");
+        double height = rowAsJSON.getDouble("height");
 
 
-      JSONArray rtRangeArray = rowAsJSON.getJSONArray("rt_range");
-      Range<Float> rtRange = Range.closed(rtRangeArray.getFloat(0), rtRangeArray.getFloat(1));
+        JSONArray mzJSONArray = rowAsJSON.getJSONArray("mz_list");
+        JSONArray intensityJSONArray = rowAsJSON.getJSONArray("intensity_list");
 
-      JSONArray mzRangeArray = rowAsJSON.getJSONArray("mz_range");
-      Range<Double> mzRange = Range.closed(mzRangeArray.getDouble(0), mzRangeArray.getDouble(1));
-
-      JSONArray intensityRangeArray = rowAsJSON.getJSONArray("intensity_range");
-      Range<Float> intensityRange = Range.closed(intensityRangeArray.getFloat(0), intensityRangeArray.getFloat(1));
-      int bestScanNumber = rowAsJSON.getInt("best_scan_no");
-
-      Scan representativeScan = null;
-      for (Scan scan : scans) {
-        if (scan.getScanNumber() == bestScanNumber) {
-          representativeScan = scan;
+        List<Double> mzList = new ArrayList<Double>();
+        List<Double> intensityList = new ArrayList<Double>();
+        for (int i = 0; i < mzJSONArray.length(); i++) {
+          mzList.add(mzJSONArray.getDouble(i));
+          intensityList.add(intensityJSONArray.getDouble(i));
         }
+
+
+        JSONArray rtRangeArray = rowAsJSON.getJSONArray("rt_range");
+        Range<Float> rtRange = Range.closed(rtRangeArray.getFloat(0), rtRangeArray.getFloat(1));
+
+        JSONArray mzRangeArray = rowAsJSON.getJSONArray("mz_range");
+        Range<Double> mzRange = Range.closed(mzRangeArray.getDouble(0), mzRangeArray.getDouble(1));
+
+        JSONArray intensityRangeArray = rowAsJSON.getJSONArray("intensity_range");
+        Range<Float> intensityRange = Range.closed(intensityRangeArray.getFloat(0), intensityRangeArray.getFloat(1));
+        int bestScanNumber = rowAsJSON.getInt("best_scan_no");
+
+        Scan representativeScan = null;
+        for (Scan scan : scans) {
+          if (scan.getScanNumber() == bestScanNumber) {
+            representativeScan = scan;
+          }
+        }
+
+
+        ModularFeature feature = new ModularFeature(featureList, rawDataFile, mz, (float) rt, (float) height, (float) area,
+                scans, Doubles.toArray(mzList), Doubles.toArray(intensityList), status, representativeScan, List.of(fragScan),
+                rtRange, mzRange, intensityRange);
+
+        if (rowAsJSON.has("ri")) {
+          feature.set(RIType.class, rowAsJSON.getInt("ri"));
+          feature.set(RIScaleType.class, rowAsJSON.getString("ri_scale"));
+        }
+
+        if (rowAsJSON.has("library_match")) {
+          JSONObject entryJSON = rowAsJSON.getJSONObject("library_match").getJSONObject("entry");
+          JSONArray libraryJSONMZs = entryJSON.getJSONArray("mz_list");
+          JSONArray libraryJSONIntensities = entryJSON.getJSONArray("intensity_list");
+
+          List<Double> libraryMZs = new ArrayList<Double>();
+          List<Double> libraryIntensities = new ArrayList<Double>();
+          for (int i = 0; i < libraryJSONMZs.length(); i++) {
+            libraryMZs.add(libraryJSONMZs.getDouble(i));
+            libraryIntensities.add(libraryJSONIntensities.getDouble(i));
+          }
+
+          Set<DBEntryField> stringKeys = Set.of(
+                  DBEntryField.NAME,
+                  DBEntryField.FORMULA,
+                  DBEntryField.INSTRUMENT,
+                  DBEntryField.INSTRUMENT_TYPE,
+                  DBEntryField.INCHIKEY,
+                  DBEntryField.MS_LEVEL,
+                  DBEntryField.COMMENT
+          );
+
+          HashMap<DBEntryField, Object> fields = new HashMap<>();
+          for (var key : stringKeys) {
+            String keyString = key.getMZmineJsonID();
+            if (entryJSON.keySet().contains(keyString)) {
+              fields.put(key, (Object) entryJSON.getString(keyString));
+            }
+          }
+          SpectralDBEntry entry = new SpectralDBEntry(null, Doubles.toArray(libraryMZs), Doubles.toArray(libraryIntensities), fields);
+
+
+          JSONObject similarityJSON = rowAsJSON.getJSONObject("library_match").getJSONObject("similarity");
+
+          SpectralSimilarity sim = new SpectralSimilarity(similarityJSON.getString("name"), similarityJSON.getFloat("score"), similarityJSON.getInt("overlap"), similarityJSON.getFloat("explained_intensity"));
+          feature.addSpectralLibraryMatches(List.of(new SpectralDBAnnotation(entry, sim, fragScan, null, null, null)));
+        }
+
+        return new ModularFeatureListRow(featureList, rowId, feature);
+      } else {
+        return null;
       }
-
-
-      ModularFeature feature = new ModularFeature(featureList, rawDataFile, mz, (float) rt, (float) height, (float) area,
-          scans, Doubles.toArray(mzList), Doubles.toArray(intensityList), status,  representativeScan, List.of(fragScan),
-          rtRange, mzRange, intensityRange);
-
-      if (rowAsJSON.has("ri")) {
-        feature.set(RIType.class, rowAsJSON.getInt("ri"));
-        feature.set(RIScaleType.class, rowAsJSON.getString("ri_scale"));
-      }
-
-      return new ModularFeatureListRow(featureList, rowId, feature);
     } catch (Exception e) {
       return null;
     }

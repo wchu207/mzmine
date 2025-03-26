@@ -67,12 +67,8 @@ import io.github.mzmine.datamodel.impl.SimpleDataPoint;
 import io.github.mzmine.modules.tools.qualityparameters.QualityParameters;
 import io.github.mzmine.util.DataPointUtils;
 import io.github.mzmine.util.FeatureUtils;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Set;
+
+import java.util.*;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
 

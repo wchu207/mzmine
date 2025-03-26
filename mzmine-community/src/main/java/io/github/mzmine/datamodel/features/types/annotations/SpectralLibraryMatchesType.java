@@ -60,6 +60,8 @@ import java.util.*;
 import javax.xml.stream.XMLStreamException;
 import javax.xml.stream.XMLStreamReader;
 import javax.xml.stream.XMLStreamWriter;
+
+import javafx.util.Pair;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -231,7 +233,7 @@ public class SpectralLibraryMatchesType extends ListWithSubsType<SpectralDBAnnot
   public Object evaluateBindings(@NotNull BindingsType bindingType,
                                  @NotNull List<? extends ModularDataModel> models) {
     if (bindingType == BindingsType.CONSENSUS) {
-      Map<String, Integer> matches = new LinkedHashMap<>();
+      Map<String, Pair<Integer, SpectralDBAnnotation>> matches = new LinkedHashMap<>();
 
       for (var model : models) {
         List<SpectralDBAnnotation> annotationsList = model.get(this);
@@ -244,32 +246,23 @@ public class SpectralLibraryMatchesType extends ListWithSubsType<SpectralDBAnnot
           if (annotation.isPresent()) {
             String name = annotation.get().getCompoundName().toLowerCase();
             int count = 0;
+            SpectralDBAnnotation bestAnnotation = null;
             if (matches.containsKey(name)) {
-              count = matches.get(name) + 1;
+              Pair<Integer, SpectralDBAnnotation> bestMatch = matches.get(name);
+              count = bestMatch.getKey() + 1;
+              bestAnnotation = bestMatch.getValue().getScore() < annotation.get().getScore() ? annotation.get() : bestMatch.getValue();
             } else {
               count = 1;
+              bestAnnotation = annotation.get();
             }
-            matches.put(name, count);
+            matches.put(name, new Pair<Integer, SpectralDBAnnotation>(count, bestAnnotation));
           }
         }
       }
 
       if (matches.size() > 0) {
-        String bestKey = Collections.max(matches.entrySet(), Map.Entry.comparingByValue()).getKey();
-        for (var model : models) {
-          List<SpectralDBAnnotation> annotationsList = model.get(this);
-          if (annotationsList != null) {
-            Optional<SpectralDBAnnotation> annotation = annotationsList.stream().max(Comparator.comparing(x -> {
-              Float score = x.getScore();
-              return score != null ? score : 0;
-            }));
-            if (annotation.isPresent()) {
-              if (Objects.equals(annotation.get().getCompoundName().toLowerCase(), bestKey)) {
-                return List.of(annotation.get());
-              }
-            }
-          }
-        }
+        String bestKey = Collections.max(matches.entrySet(), Comparator.comparing(pair -> pair.getValue().getKey())).getKey();
+        return List.of(matches.get(bestKey).getValue());
       }
 
       return null;

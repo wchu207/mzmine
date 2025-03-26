@@ -68,9 +68,7 @@ import io.github.mzmine.util.scans.ScanUtils;
 import io.github.mzmine.util.scans.similarity.SpectralSimilarity;
 import io.github.mzmine.util.spectraldb.entry.*;
 
-import java.io.BufferedWriter;
-import java.io.File;
-import java.io.IOException;
+import java.io.*;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.time.Instant;
@@ -79,6 +77,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import jakarta.json.stream.JsonParser;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import jakarta.json.*;
@@ -244,14 +243,32 @@ public class ExportScansFeatureTask extends AbstractFeatureListTask {
 
       for (FeatureList flist : featureLists) {
         description = "Exporting scan entries for feature list " + flist.getName();
-        for (var row : flist.getRows()) {
-          if (!checkPreConditions(row)) {
-            finishedItems.incrementAndGet();
-            continue;
+        List<JsonObject> rows = flist.getRows().stream().parallel().map(row -> {
+          try {
+            if (!checkPreConditions(row)) {
+              finishedItems.incrementAndGet();
+            } else {
+              finishedItems.incrementAndGet();
+              return exportRow(row);
+            }
+          } catch (IOException e) {
+            error("Could not open file " + outFile + " for writing.");
+            logger.log(Level.WARNING,
+                    String.format("Error writing scans file: %s. Message: %s", outFile.getAbsolutePath(),
+                            e.getMessage()), e);
           }
-          exportRow(row);
-          finishedItems.incrementAndGet();
+          return null;
+        }).toList();
+
+        JsonArrayBuilder jsonArray = Json.createArrayBuilder();
+        for(var row : rows) {
+          jsonArray.add(row);
         }
+
+        JsonWriter writer = Json.createWriter(new BufferedWriter(new FileWriter(outFile)));
+        writer.write(jsonArray.build());
+        writer.close();
+
         flist.getAppliedMethods().add(
             new SimpleFeatureListAppliedMethod(LibraryBatchGenerationModule.class, parameters,
                 getModuleCallDate()));
@@ -259,6 +276,7 @@ public class ExportScansFeatureTask extends AbstractFeatureListTask {
       //
       logger.info(String.format("Exported %d new library entries to file %s", exported.get(),
           outFile.getAbsolutePath()));
+
     } catch (IOException e) {
       error("Could not open file " + outFile + " for writing.");
       logger.log(Level.WARNING,
@@ -368,29 +386,15 @@ public class ExportScansFeatureTask extends AbstractFeatureListTask {
     return map.build();
   }
 
-  private void exportRow(final FeatureListRow row) throws IOException {
+  private JsonObject exportRow(final FeatureListRow row) throws IOException {
     // get all fragment scans as entries to decide whether to export MS1 or not
     final List<SpectralLibraryEntry> fragmentScans = prepareFragmentScans(row);
 
     if (ms1RequiresFragmentScan && fragmentScans.isEmpty()) {
-      return;
+      return null;
     }
 
-    final List<SpectralLibraryEntry> ms1Scans =
-        exportMs1 ? prepareMs1Scans(row) : new ArrayList<>();
 
-    // optional filtering of entries
-    filterEntries(row, ms1Scans, fragmentScans);
-
-    // fragment scans may be empty now
-    if (ms1RequiresFragmentScan && fragmentScans.isEmpty()) {
-      return;
-    }
-
-    // export MS1 scans
-    for (final SpectralLibraryEntry ms1 : ms1Scans) {
-      exportScan(ms1Writer, ms1FileNameWithoutExtension, ms1, null);
-    }
 
     IonTimeSeries ions = row.getBestFeature().getFeatureData();
     JsonArrayBuilder mz_list = Json.createArrayBuilder();
@@ -433,9 +437,11 @@ public class ExportScansFeatureTask extends AbstractFeatureListTask {
     }
     map.add("scans", scans.build());
     // export MS2 scans
-    for (final SpectralLibraryEntry msn : fragmentScans) {
-      exportScan(msnWriter, msnFileNameWithoutExtension, msn, map);
+    JsonObject ret = null;
+    if (!fragmentScans.isEmpty()) {
+      ret = createScan(msnWriter, msnFileNameWithoutExtension, fragmentScans.getFirst(), map);
     }
+    return ret;
   }
 
   /**
@@ -506,6 +512,20 @@ public class ExportScansFeatureTask extends AbstractFeatureListTask {
 
     // export
     ExportScansFeatureTask.exportEntry(writer, entry, format, normalizer, extra);
+  }
+
+  private JsonObject createScan(final BufferedWriter writer, final String fileNameWithoutExtension,
+                          final SpectralLibraryEntry entry, final JsonObjectBuilder extra) throws IOException {
+    // specific things that should only happen in library generation - otherwise add to the factory
+    final int entryId = exported.incrementAndGet();
+    entry.putIfNotNull(DBEntryField.ENTRY_ID, entryId);
+
+    entry.putIfNotNull(DBEntryField.USI,
+            ScanUtils.createUSI(entry.getAsString(DBEntryField.DATASET_ID).orElse(null),
+                    fileNameWithoutExtension, String.valueOf(entryId)));
+
+    // export
+    return ExportScansFeatureTask.createEntry(writer, entry, format, normalizer, extra);
   }
 
   public SpectralLibraryEntry spectrumToEntry(MassSpectrum spectrum,
@@ -582,6 +602,23 @@ public class ExportScansFeatureTask extends AbstractFeatureListTask {
       case mgf -> MGFEntryGenerator.createMGFEntry(entry, normalizer).spectrum();
     };
     writer.append(stringEntry).append("\n");
+  }
+
+
+  public static JsonObject createEntry(final @NotNull BufferedWriter writer,
+                                 final @NotNull SpectralLibraryEntry entry, final @NotNull SpectralLibraryExportFormats format,
+                                 final @NotNull IntensityNormalizer normalizer, JsonObjectBuilder extra) throws IOException {
+    // TODO maybe skip empty spectra. After formatting the number of signals may be smaller than before
+    // if intensity is 0 after formatting
+    String stringEntry = switch (format) {
+      case msp -> MSPEntryGenerator.createMSPEntry(entry, normalizer);
+      case json_mzmine -> MZmineJsonGenerator.generateJSON(entry, normalizer, extra);
+      case mgf -> MGFEntryGenerator.createMGFEntry(entry, normalizer).spectrum();
+    };
+    JsonParser parser = Json.createParser(new StringReader(stringEntry));
+    parser.next();
+
+    return parser.getObject();
   }
 
   /**

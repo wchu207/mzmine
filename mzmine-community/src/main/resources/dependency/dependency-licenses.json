@@ -244,6 +244,23 @@
             ]
         },
         {
+            "moduleName": "com.github.robinschmid:gs-core",
+            "moduleVersion": "45504f632f",
+            "moduleUrls": [
+                "http://graphstream-project.org"
+            ],
+            "moduleLicenses": [
+                {
+                    "moduleLicense": "Cecill-C",
+                    "moduleLicenseUrl": "http://www.cecill.info/licences/Licence_CeCILL-C_V1-en.html"
+                },
+                {
+                    "moduleLicense": "GNU LESSER GENERAL PUBLIC LICENSE, Version 3",
+                    "moduleLicenseUrl": "https://www.gnu.org/licenses/lgpl-3.0"
+                }
+            ]
+        },
+        {
             "moduleName": "com.github.virtuald:curvesapi",
             "moduleVersion": "1.06",
             "moduleUrls": [
@@ -2094,6 +2111,40 @@
                 {
                     "moduleLicense": "Cecill-C",
                     "moduleLicenseUrl": "http://www.cecill.info/licences/Licence_CeCILL-C_V1-en.html\n\t\t\t"
+                },
+                {
+                    "moduleLicense": "GNU LESSER GENERAL PUBLIC LICENSE, Version 3",
+                    "moduleLicenseUrl": "https://www.gnu.org/licenses/lgpl-3.0"
+                }
+            ]
+        },
+        {
+            "moduleName": "org.graphstream:mbox2",
+            "moduleVersion": "1.0",
+            "moduleUrls": [
+                "http://graphstream-project.org"
+            ],
+            "moduleLicenses": [
+                {
+                    "moduleLicense": "Cecill-C",
+                    "moduleLicenseUrl": "http://www.cecill.info/licences/Licence_CeCILL-C_V1-en.html\n      "
+                },
+                {
+                    "moduleLicense": "GNU LESSER GENERAL PUBLIC LICENSE, Version 3",
+                    "moduleLicenseUrl": "https://www.gnu.org/licenses/lgpl-3.0"
+                }
+            ]
+        },
+        {
+            "moduleName": "org.graphstream:pherd",
+            "moduleVersion": "1.0",
+            "moduleUrls": [
+                "http://graphstream-project.org"
+            ],
+            "moduleLicenses": [
+                {
+                    "moduleLicense": "Cecill-C",
+                    "moduleLicenseUrl": "http://www.cecill.info/licences/Licence_CeCILL-C_V1-en.html\n      "
                 },
                 {
                     "moduleLicense": "GNU LESSER GENERAL PUBLIC LICENSE, Version 3",

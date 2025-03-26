@@ -31,6 +31,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.logging.Logger;
+import java.util.stream.IntStream;
+
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -54,7 +56,12 @@ public class GCConsensusAlignerPostProcessor implements FeatureAlignmentPostProc
     flist.addRowType(DataTypes.get(GcAlignMissingNumFeaturesType.class));
     flist.addRowType(DataTypes.get(GcAlignShiftedNumFeaturesType.class));
 
-    int missing = flist.parallelStream().mapToInt(row -> setConsensusMainFeature(flist, row)).sum();
+    int[] missingArr = flist.parallelStream().mapToInt(row -> setConsensusMainFeature(flist, row)).toArray();
+    int missing = 0;
+    if (missingArr.length > 0) {
+      missing = IntStream.of(missingArr).sum();
+    }
+
     logger.fine("""
         Done with setting consensus main features in GC alignment. /
         There were %d main signals that had no corresponding raw data signal in some samples. /
@@ -132,7 +139,7 @@ public class GCConsensusAlignerPostProcessor implements FeatureAlignmentPostProc
     RawDataFile dataFile = feature.getRawDataFile();
     // there might be missing data points / gaps in feature.getScanNumbers
     // therefore extract from raw file in RT range
-    List<? extends Scan> seletedScans = flist.getSeletedScans(feature.getRawDataFile());
+    List<? extends Scan> seletedScans = flist.getSeletedScans(feature.getRawDataFile()).stream().sorted(Comparator.comparing(Scan::getRetentionTime)).toList();
     seletedScans = BinarySearch.indexRange(feature.getRawDataPointsRTRange(), seletedScans,
         Scan::getRetentionTime).sublist(seletedScans);
     IonTimeSeries<Scan> ionTimeSeries = IonTimeSeriesUtils.extractIonTimeSeries(dataFile,
