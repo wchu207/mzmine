@@ -34,12 +34,9 @@ import io.github.mzmine.datamodel.features.ModularFeatureList;
 import io.github.mzmine.datamodel.features.SimpleFeatureListAppliedMethod;
 import io.github.mzmine.datamodel.features.types.DataType;
 import io.github.mzmine.datamodel.features.types.LinkedGraphicalType;
-import io.github.mzmine.datamodel.features.types.alignment.AlignmentMainType;
-import io.github.mzmine.datamodel.features.types.annotations.CompoundNameType;
 import io.github.mzmine.datamodel.features.types.modifiers.NoTextColumn;
 import io.github.mzmine.datamodel.features.types.modifiers.NullColumnType;
 import io.github.mzmine.datamodel.features.types.modifiers.SubColumnsFactory;
-import io.github.mzmine.datamodel.features.types.numbers.*;
 import io.github.mzmine.modules.io.export_features_gnps.fbmn.FeatureListRowsFilter;
 import io.github.mzmine.parameters.ParameterSet;
 import io.github.mzmine.taskcontrol.AbstractTask;
@@ -171,7 +168,7 @@ public class CSVExportModularTask extends AbstractTask implements ProcessedItems
       // check concurrent modification during export
       final int numRows = featureList.getNumberOfRows();
       final long numFeatures = featureList.streamFeatures().count();
-      final long numMS2 = featureList.stream().parallel().filter(row -> row.hasMs2Fragmentation()).count();
+      final long numMS2 = featureList.stream().filter(row -> row.hasMs2Fragmentation()).count();
 
       // Filename
       File curFile = fileName;
@@ -223,17 +220,15 @@ public class CSVExportModularTask extends AbstractTask implements ProcessedItems
   @SuppressWarnings("rawtypes")
   private void exportFeatureList(ModularFeatureList flist, BufferedWriter writer)
       throws IOException {
-    final List<FeatureListRow> rows = flist.getRows().stream().parallel().filter(rowFilter::accept)
+    final List<FeatureListRow> rows = flist.getRows().stream().filter(rowFilter::accept)
         .sorted(FeatureListRowSorter.DEFAULT_ID).toList();
     List<RawDataFile> rawDataFiles = flist.getRawDataFiles();
 
-    List<DataType> rowTypes = flist.getRowTypes().stream().parallel()
-        .filter(this::filterType)
+    List<DataType> rowTypes = flist.getRowTypes().stream().filter(this::filterType)
         .filter(type -> !removeEmptyCols || typeContainData(type, rows, false, -1))
         .collect(Collectors.toList());
 
-    List<DataType> featureTypes = flist.getFeatureTypes().stream().parallel()
-        .filter(this::filterType)
+    List<DataType> featureTypes = flist.getFeatureTypes().stream().filter(this::filterType)
         .filter(type -> !removeEmptyCols || typeContainData(type, rows, true, -1))
         .collect(Collectors.toList());
 
@@ -284,7 +279,7 @@ public class CSVExportModularTask extends AbstractTask implements ProcessedItems
 
       final int row = i;
       writer.append(
-          formattedCols.stream().parallel().map(col -> col[row]).collect(Collectors.joining(fieldSeparator)));
+          formattedCols.stream().map(col -> col[row]).collect(Collectors.joining(fieldSeparator)));
       writer.newLine();
 
       exportedRows.incrementAndGet();
@@ -336,11 +331,11 @@ public class CSVExportModularTask extends AbstractTask implements ProcessedItems
   private Stream<? extends ModularDataModel> getDataStream(List<FeatureListRow> rows,
       RawDataFile raw, boolean allRawFiles) {
     if (allRawFiles) {
-      return rows.stream().parallel().flatMap(row -> row.getFeatures().stream().parallel());
+      return rows.stream().flatMap(row -> row.getFeatures().stream());
     } else if (raw == null) {
-      return rows.stream().parallel();
+      return rows.stream();
     } else {
-      return rows.stream().parallel().map(row -> (ModularFeature) row.getFeature(raw));
+      return rows.stream().map(row -> (ModularFeature) row.getFeature(raw));
     }
   }
 
@@ -373,16 +368,7 @@ public class CSVExportModularTask extends AbstractTask implements ProcessedItems
    */
   public boolean filterType(DataType type) {
     return !(type instanceof NoTextColumn || type instanceof NullColumnType
-        || type instanceof LinkedGraphicalType
-        || type instanceof IntensityRangeType
-        || type instanceof MZRangeType
-        || type instanceof NeutralMassType
-        || type instanceof CompoundNameType
-        || type instanceof AlignmentMainType
-        || type instanceof FwhmType
-        || type instanceof AsymmetryFactorType
-        || type instanceof TailingFactorType
-    );
+        || type instanceof LinkedGraphicalType);
   }
 
   /**
@@ -461,8 +447,8 @@ public class CSVExportModularTask extends AbstractTask implements ProcessedItems
   private void checkConcurrentModification(FeatureList featureList, int numRows, long numFeatures,
       long numMS2) {
     final int numRowsEnd = featureList.getNumberOfRows();
-    final long numFeaturesEnd = featureList.streamFeatures().parallel().count();
-    final long numMS2End = featureList.stream().parallel().filter(row -> row.hasMs2Fragmentation()).count();
+    final long numFeaturesEnd = featureList.streamFeatures().count();
+    final long numMS2End = featureList.stream().filter(row -> row.hasMs2Fragmentation()).count();
 
     if (numRows != numRowsEnd) {
       throw new ConcurrentModificationException(String.format(

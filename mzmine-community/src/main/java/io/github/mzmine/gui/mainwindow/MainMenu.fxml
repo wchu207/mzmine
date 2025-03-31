@@ -260,6 +260,8 @@
 
       <MenuItem text="CSV" onAction="#runModule"
         userData="io.github.mzmine.modules.io.export_features_csv.CSVExportModularModule"/>
+      <MenuItem text="CSV (custom)" onAction="#runModule"
+                userData="io.github.mzmine.modules.io.export_features_csv.CustomCSVExportModularModule"/>
       <MenuItem text="Export compound annotations to csv" onAction="#runModule"
         userData="io.github.mzmine.modules.io.export_compoundAnnotations_csv.CompoundAnnotationsCSVExportModule"/>
       <MenuItem text="CSV (legacy MZmine 2)" onAction="#runModule"

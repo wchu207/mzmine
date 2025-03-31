@@ -80,7 +80,6 @@ public class CustomRowsSpectralMatchTask extends AbstractTask {
   protected final MZTolerance mzToleranceRemovePrecursor = new MZTolerance(4d, 0d);
   // in some cases this task is only going to run on one scan
   protected final Scan scan;
-  protected final AtomicInteger matches = new AtomicInteger(0);
   protected final MZTolerance mzToleranceSpectra;
   protected final MZTolerance mzTolerancePrecursor;
   // scan merging and ms levels
@@ -301,9 +300,6 @@ public class CustomRowsSpectralMatchTask extends AbstractTask {
 
       matchScan(entries, scan);
 
-      logger.info(
-          () -> String.format("library matches=%d (Errors:%d); library entries=%d; for scan: %s",
-              getCount(), getErrorCount(), entries.size(), scan));
     }
 
     // run in parallel
@@ -326,8 +322,6 @@ public class CustomRowsSpectralMatchTask extends AbstractTask {
             return 0;
           }).sum();
       logger.info("Total spectral library matches " + totalMatches);
-      logger.info(() -> String.format("library matches=%d (Errors:%d); rows=%d; library entries=%d",
-          getCount(), getErrorCount(), totalRows, entries.size()));
     }
   }
 
@@ -375,7 +369,6 @@ public class CustomRowsSpectralMatchTask extends AbstractTask {
           Float ccsError = PercentTolerance.getPercentError(entry.getOrElse(DBEntryField.CCS, null),
               precursorCCS);
 
-          matches.incrementAndGet();
           addIdentities(null,
               List.of(new SpectralDBAnnotation(entry, sim, scan, ccsError, scanPrecursorMZ, rt)));
         }
@@ -487,7 +480,7 @@ public class CustomRowsSpectralMatchTask extends AbstractTask {
             ids = new ArrayList<>();
           }
           ids.add(best);
-          matches.getAndIncrement();
+          //matches.getAndIncrement();
         }
       }
 
@@ -499,7 +492,7 @@ public class CustomRowsSpectralMatchTask extends AbstractTask {
           // reversed order: by similarity score
           matches = matches.stream()
               .sorted(Comparator.comparingDouble(SpectralDBAnnotation::getScore).reversed())
-              .collect(Collectors.toList());
+              .toList();
 
           // set sorted list
           feature.setSpectralLibraryMatch(matches);
@@ -695,10 +688,6 @@ public class CustomRowsSpectralMatchTask extends AbstractTask {
     if (feature != null) {
       feature.addSpectralLibraryMatches(matches);
     }
-  }
-
-  public int getCount() {
-    return matches.get();
   }
 
   public int getErrorCount() {

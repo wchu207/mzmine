@@ -394,8 +394,6 @@ public class ExportScansFeatureTask extends AbstractFeatureListTask {
       return null;
     }
 
-
-
     IonTimeSeries ions = row.getBestFeature().getFeatureData();
     JsonArrayBuilder mz_list = Json.createArrayBuilder();
     JsonArrayBuilder intensity_list = Json.createArrayBuilder();
@@ -664,4 +662,5 @@ public class ExportScansFeatureTask extends AbstractFeatureListTask {
   protected @NotNull List<FeatureList> getProcessedFeatureLists() {
     return List.of(featureLists);
   }
+
 }

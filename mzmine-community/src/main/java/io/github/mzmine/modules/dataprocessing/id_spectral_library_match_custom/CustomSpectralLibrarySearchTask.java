@@ -29,7 +29,8 @@ import io.github.mzmine.datamodel.features.Feature;
 import io.github.mzmine.datamodel.features.FeatureList;
 import io.github.mzmine.datamodel.features.SimpleFeatureListAppliedMethod;
 import io.github.mzmine.datamodel.features.types.DataTypes;
-import io.github.mzmine.datamodel.features.types.annotations.CustomSpectralLibraryMatchesSummaryType;
+import io.github.mzmine.datamodel.features.types.annotations.CustomSpectralLibraryMatchesGlobalSummaryType;
+import io.github.mzmine.datamodel.features.types.annotations.CustomSpectralLibraryMatchesLocalSummaryType;
 import io.github.mzmine.datamodel.features.types.annotations.SpectralLibraryMatchesType;
 import io.github.mzmine.parameters.ParameterSet;
 import io.github.mzmine.taskcontrol.TaskStatus;
@@ -55,7 +56,7 @@ class CustomSpectralLibrarySearchTask extends CustomRowsSpectralMatchTask {
     List<Feature> rows = new ArrayList<>();
     // add row type
     for (var flist : featureLists) {
-      flist.addFeatureType(DataTypes.get(CustomSpectralLibraryMatchesSummaryType.class));
+      flist.addFeatureType(DataTypes.get(CustomSpectralLibraryMatchesLocalSummaryType.class));
       flist.addFeatureType(DataTypes.get(SpectralLibraryMatchesType.class));
       for (var raw : flist.getRawDataFiles()) {
         rows.addAll(flist.getFeatures(raw));

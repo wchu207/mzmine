@@ -79,6 +79,7 @@ import io.github.mzmine.modules.io.export_ccsbase.CcsBaseExportModule;
 import io.github.mzmine.modules.io.export_compoundAnnotations_csv.CompoundAnnotationsCSVExportModule;
 import io.github.mzmine.modules.io.export_features_all_speclib_matches.ExportAllIdsGraphicalModule;
 import io.github.mzmine.modules.io.export_features_csv.CSVExportModularModule;
+import io.github.mzmine.modules.io.export_features_csv_custom.CustomCSVExportModularModule;
 import io.github.mzmine.modules.io.export_features_csv_legacy.LegacyCSVExportModule;
 import io.github.mzmine.modules.io.export_features_featureML.FeatureMLExportModularModule;
 import io.github.mzmine.modules.io.export_features_gnps.fbmn.GnpsFbmnExportAndSubmitModule;
@@ -264,7 +265,7 @@ public abstract class AbstractWorkspace implements Workspace {
     final Menu menu = new Menu("Export feature list");
 
     addModuleMenuItems(menu, "Graphics", ExportAllIdsGraphicalModule.class);
-    addModuleMenuItems(menu, CSVExportModularModule.class, CompoundAnnotationsCSVExportModule.class,
+    addModuleMenuItems(menu, CSVExportModularModule.class, CustomCSVExportModularModule.class, CompoundAnnotationsCSVExportModule.class,
         LegacyCSVExportModule.class, MZTabmExportModule.class, SQLExportModule.class,
         // scans
         ExportScansFeatureModule.class, AdapMspExportModule.class, AdapMgfExportModule.class,

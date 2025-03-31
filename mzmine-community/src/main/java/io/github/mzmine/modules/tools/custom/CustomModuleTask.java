@@ -32,10 +32,7 @@ import io.github.mzmine.datamodel.features.types.DataType;
 import io.github.mzmine.datamodel.features.types.DataTypes;
 import io.github.mzmine.datamodel.features.types.FeatureGroupType;
 import io.github.mzmine.datamodel.features.types.FeaturesType;
-import io.github.mzmine.datamodel.features.types.annotations.CommentType;
-import io.github.mzmine.datamodel.features.types.annotations.CompoundDatabaseMatchesType;
-import io.github.mzmine.datamodel.features.types.annotations.ManualAnnotationType;
-import io.github.mzmine.datamodel.features.types.annotations.SpectralLibraryMatchesType;
+import io.github.mzmine.datamodel.features.types.annotations.*;
 import io.github.mzmine.datamodel.features.types.annotations.iin.IonIdentityListType;
 import io.github.mzmine.datamodel.features.types.networking.NetworkStatsType;
 import io.github.mzmine.datamodel.features.types.numbers.FragmentScanNumbersType;
@@ -68,6 +65,9 @@ public class CustomModuleTask extends AbstractTask {
   public void run() {
     List<FeatureListRow> rows = new ArrayList<FeatureListRow>();
     for (var flist : featureLists) {
+      flist.addFeatureType(new CustomSpectralLibraryMatchesLocalSummaryType());
+      flist.addFeatureType(new CustomSpectralLibraryMatchesGlobalSummaryType());
+      flist.applyRowBindings();
       rows.addAll(flist.getRows());
     }
 
