@@ -53,11 +53,18 @@ import io.github.mzmine.parameters.parametertypes.submodules.SubModuleParameter;
 import io.github.mzmine.parameters.parametertypes.tolerances.MZTolerance;
 import io.github.mzmine.util.files.FileAndPathUtil;
 import java.io.File;
+import java.util.List;
+
+import javafx.stage.FileChooser;
 import org.jetbrains.annotations.NotNull;
 
 public class ExportScansFeatureMainParameters extends SimpleParameterSet {
 
   public static final FeatureListsParameter flists = new FeatureListsParameter();
+
+  private static final List<FileChooser.ExtensionFilter> filters =
+          List.of(new FileChooser.ExtensionFilter("JSON files", "*.json"));
+
 
   public static final FileNameSuffixExportParameter file = new FileNameSuffixExportParameter(
       "Export file", """
@@ -65,7 +72,7 @@ public class ExportScansFeatureMainParameters extends SimpleParameterSet {
       (i.e. "prefix_%s_suffix.mgf" would become "prefix_SourceFeatureListName_suffix.mgf").
       If the file already exists, it will be overwritten.
       Filename without this pattern means all selected feature lists are exported to the same file.""".formatted(
-      SiriusExportTask.MULTI_NAME_PATTERN, SiriusExportTask.MULTI_NAME_PATTERN), "scans");
+      SiriusExportTask.MULTI_NAME_PATTERN, SiriusExportTask.MULTI_NAME_PATTERN), filters, "scans");
 
   public static final ComboParameter<SpectralLibraryExportFormats> exportFormat = new ComboParameter<>(
       "Export format", "format to export", SpectralLibraryExportFormats.values(),

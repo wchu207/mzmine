@@ -79,9 +79,11 @@ public class MetadataGroupingComponent extends FlowPane implements
 
     this.availableTypes = types;
     final String[] columns = ProjectService.getMetadata().getColumns().stream()
-        .filter(col -> availableTypes.contains(col.getType())).map(MetadataColumn::getTitle)
+        .filter(col -> availableTypes.contains(col.getType())).map(col -> col.getTitle())
         .toArray(String[]::new);
-    TextFields.bindAutoCompletion(text, columns);
+    if (columns.length > 0) {
+        TextFields.bindAutoCompletion(text, columns);
+    }
 
     Bindings.bindBidirectional(text.textProperty(), valueProperty(),
         new StringConverter<MetadataColumn<?>>() {
