@@ -41,6 +41,7 @@ import io.github.mzmine.taskcontrol.AbstractTask;
 import io.github.mzmine.taskcontrol.ProcessedItemsCounter;
 import io.github.mzmine.taskcontrol.TaskStatus;
 import io.github.mzmine.util.files.FileAndPathUtil;
+import org.apache.commons.io.FilenameUtils;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
@@ -193,12 +194,34 @@ public class CustomCSVExportModularTask extends AbstractTask implements Processe
         return;
       }
 
-      final int numRows = featureList.getNumberOfRows();
-      final long numFeatures = featureList.streamFeatures().count();
-      final long numMS2 = featureList.stream().filter(row -> row.hasMs2Fragmentation()).count();
+      int numRows = featureList.getNumberOfRows();
+      long numFeatures = featureList.streamFeatures().count();
+      long numMS2 = featureList.stream().filter(row -> row.hasMs2Fragmentation()).count();
 
       checkConcurrentModification(featureList, numRows, numFeatures, numMS2);
 
+      File summaryFile = new File(FilenameUtils.removeExtension(curFile.getAbsolutePath()) + "_summary.csv");
+      try (CSVWriter writer = new CSVWriter(Files.newBufferedWriter(summaryFile.toPath(),
+              StandardCharsets.UTF_8))) {
+        exportFeatureListSummary(featureList, writer);
+
+      } catch (IOException e) {
+        setStatus(TaskStatus.ERROR);
+        setErrorMessage("Could not open file " + curFile + " for writing.");
+        logger.log(Level.WARNING, String.format(
+                "Error writing new CSV format to file: %s for feature list: %s. Message: %s",
+                summaryFile.getAbsolutePath(), featureList.getName(), e.getMessage()), e);
+        return;
+      }
+
+      numRows = featureList.getNumberOfRows();
+      numFeatures = featureList.streamFeatures().count();
+      numMS2 = featureList.stream().filter(row -> row.hasMs2Fragmentation()).count();
+
+      checkConcurrentModification(featureList, numRows, numFeatures, numMS2);
+
+
+      checkConcurrentModification(featureList, numRows, numFeatures, numMS2);
       if (parameters != null) { // if this is null, the external constructor was used.
         featureList.getAppliedMethods().add(
                 new SimpleFeatureListAppliedMethod(CustomCSVExportModularModule.class, parameters,
@@ -250,6 +273,29 @@ public class CustomCSVExportModularTask extends AbstractTask implements Processe
       }
       writer.writeNext(allRowEntries.toArray(new String[]{}));
       processedRows += 1;
+    }
+  }
+
+  private void exportFeatureListSummary(ModularFeatureList flist, CSVWriter writer)
+          throws IOException {
+    List<RawDataFile> raws = flist.getRawDataFiles();
+    List<String> currentRow = new ArrayList<>();
+    currentRow.add("row id");
+    currentRow.addAll(raws.stream().map(RawDataFile::getName).toList());
+
+    writer.writeNext(currentRow.toArray(new String[]{}));
+    for (var row : flist.getRows()) {
+      currentRow.clear();;
+      currentRow.add(row.getID().toString());
+      for (var raw : raws) {
+        if (row.hasFeature(raw)) {
+          Integer ri = row.getFeature(raw).getRI();
+          currentRow.add(ri != null ? ri.toString() : "NO RI");
+        } else {
+          currentRow.add("");
+        }
+      }
+      writer.writeNext(currentRow.toArray(new String[]{}));
     }
   }
 
