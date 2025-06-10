@@ -57,6 +57,7 @@ import io.github.mzmine.util.spectraldb.entry.SpectralLibraryEntry;
 
 import java.lang.reflect.Array;
 import java.util.*;
+import java.util.Map.Entry;
 import javax.xml.stream.XMLStreamException;
 import javax.xml.stream.XMLStreamReader;
 import javax.xml.stream.XMLStreamWriter;
@@ -232,50 +233,17 @@ public class SpectralLibraryMatchesType extends ListWithSubsType<SpectralDBAnnot
 
   public Object evaluateBindings(@NotNull BindingsType bindingType,
                                  @NotNull List<? extends ModularDataModel> models) {
-    if (bindingType == BindingsType.CONSENSUS) {
-      Map<String, Pair<Integer, SpectralDBAnnotation>> matches = new LinkedHashMap<>();
-
-      for (var model : models) {
-        List<SpectralDBAnnotation> annotationsList = model.get(this);
-        if (annotationsList != null) {
-          Optional<SpectralDBAnnotation> annotation = annotationsList.stream().max(Comparator.comparing(x -> {
-            Float score = x.getScore();
-            return score != null ? score : 0;
-          }));
-
-          if (annotation.isPresent()) {
-            String name = annotation.get().getCompoundName().toLowerCase();
-            int count = 0;
-            SpectralDBAnnotation bestAnnotation = null;
-            if (matches.containsKey(name)) {
-              Pair<Integer, SpectralDBAnnotation> bestMatch = matches.get(name);
-              count = bestMatch.getKey() + 1;
-              bestAnnotation = bestMatch.getValue().getScore() < annotation.get().getScore() ? annotation.get() : bestMatch.getValue();
-            } else {
-              count = 1;
-              bestAnnotation = annotation.get();
-            }
-            matches.put(name, new Pair<Integer, SpectralDBAnnotation>(count, bestAnnotation));
-          }
-        }
-      }
-
-      if (matches.size() > 0) {
-        String bestKey = Collections.max(matches.entrySet(), Comparator.comparing(pair -> pair.getValue().getKey())).getKey();
-        return List.of(matches.get(bestKey).getValue());
-      }
-
-      return null;
-    } else if (bindingType == BindingsType.LIST){
+    if (bindingType == BindingsType.CONSENSUS || bindingType == BindingsType.LIST) {
       Map<String, Integer> matches = new LinkedHashMap<>();
 
       for (var model : models) {
         List<SpectralDBAnnotation> annotationsList = model.get(this);
         if (annotationsList != null) {
-          Optional<SpectralDBAnnotation> annotation = annotationsList.stream().max(Comparator.comparing(x -> {
-            Float score = x.getScore();
-            return score != null ? score : 0;
-          }));
+          Optional<SpectralDBAnnotation> annotation = annotationsList.stream()
+              .max(Comparator.comparing(x -> {
+                Float score = x.getScore();
+                return score != null ? score : 0;
+              }));
 
           if (annotation.isPresent()) {
             String name = annotation.get().getCompoundName().toLowerCase();
@@ -290,33 +258,56 @@ public class SpectralLibraryMatchesType extends ListWithSubsType<SpectralDBAnnot
         }
       }
 
-      List<Map.Entry<String, Integer>> entries = matches.entrySet()
-          .stream()
-          .sorted(Comparator.comparing(k -> k.getValue()))
-          .toList().reversed();
+      List<Map.Entry<String, Integer>> entries = matches.entrySet().stream().sorted(
+          Comparator.comparing(Entry<String, Integer>::getValue).reversed()
+              .thenComparing(Entry<String, Integer>::getKey)).toList();
 
-      List<String> ident = new LinkedList<>();
-      for (var entry : entries) {
-        for (var model : models) {
-          List<SpectralDBAnnotation> annotationsList = model.get(this);
-          if (annotationsList != null) {
-            Optional<SpectralDBAnnotation> annotation = annotationsList.stream().max(Comparator.comparing(x -> {
-              Float score = x.getScore();
-              return score != null ? score : 0;
-            }));
-            if (annotation.isPresent()) {
-              String name = annotation.get().getCompoundName();
-              if (Objects.equals(name.toLowerCase(), entry.getKey())) {
-                ident.add(String.format("%s (%d)", name, entry.getValue()));
-                break;
+      if (bindingType == BindingsType.LIST) {
+        List<String> ident = new LinkedList<>();
+        for (var entry : entries) {
+          for (var model : models) {
+            List<SpectralDBAnnotation> annotationsList = model.get(this);
+            if (annotationsList != null) {
+              Optional<SpectralDBAnnotation> annotation = annotationsList.stream()
+                  .max(Comparator.comparing(x -> {
+                    Float score = x.getScore();
+                    return score != null ? score : 0;
+                  }));
+              if (annotation.isPresent()) {
+                String name = annotation.get().getCompoundName();
+                if (Objects.equals(name.toLowerCase(), entry.getKey())) {
+                  ident.add(String.format("%s (%d)", name, entry.getValue()));
+                  break;
+                }
               }
             }
           }
         }
+        return !ident.isEmpty() ? String.join("; ", ident) : null;
+      } else /*if (bindingType == BindingsType.CONSENSUS)*/ {
+        if (!entries.isEmpty()) {
+          String cmpdName = entries.getFirst().getKey();
+          for (var model : models) {
+            List<SpectralDBAnnotation> annotationsList = model.get(this);
+            if (annotationsList != null) {
+              Optional<SpectralDBAnnotation> annotation = annotationsList.stream()
+                  .max(Comparator.comparing(x -> {
+                    Float score = x.getScore();
+                    return score != null ? score : 0;
+                  }));
+              if (annotation.isPresent()) {
+                String name = annotation.get().getCompoundName();
+                if (Objects.equals(name.toLowerCase(), cmpdName)) {
+                  return List.of(annotation.get());
+                }
+              }
+            }
+          }
+        } else {
+          return null;
+        }
       }
-      return !ident.isEmpty() ? String.join("; ", ident) : null;
-    } else {
-      return super.evaluateBindings(bindingType, models);
     }
+    return super.evaluateBindings(bindingType, models);
   }
 }
