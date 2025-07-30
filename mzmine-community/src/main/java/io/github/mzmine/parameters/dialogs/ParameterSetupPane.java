@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2004-2024 The mzmine Development Team
+ * Copyright (c) 2004-2025 The mzmine Development Team
  *
  * Permission is hereby granted, free of charge, to any person
  * obtaining a copy of this software and associated documentation
@@ -25,6 +25,7 @@
 
 package io.github.mzmine.parameters.dialogs;
 
+import io.github.mzmine.gui.DesktopService;
 import io.github.mzmine.gui.helpwindow.HelpWindow;
 import io.github.mzmine.main.MZmineCore;
 import io.github.mzmine.parameters.EmbeddedParameterComponentProvider;
@@ -33,6 +34,9 @@ import io.github.mzmine.parameters.Parameter;
 import io.github.mzmine.parameters.ParameterSet;
 import io.github.mzmine.parameters.UserParameter;
 import io.github.mzmine.parameters.parametertypes.HiddenParameter;
+import io.github.mzmine.parameters.parametertypes.selectors.FeatureListsComponent;
+import io.github.mzmine.parameters.parametertypes.selectors.RawDataFilesComponent;
+import io.github.mzmine.parameters.parametertypes.selectors.SpectralLibrarySelectionComponent;
 import io.github.mzmine.parameters.parametertypes.submodules.ModuleOptionsEnumComponent;
 import java.net.URL;
 import java.util.HashMap;
@@ -61,7 +65,9 @@ import javafx.scene.layout.Region;
 import javafx.scene.layout.RowConstraints;
 import javafx.scene.layout.VBox;
 import javafx.util.Duration;
+import org.controlsfx.control.CheckComboBox;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * This class represents a basic pane for parameter setup when the {@link ParameterSetupDialog} is
@@ -81,6 +87,7 @@ public class ParameterSetupPane extends BorderPane implements EmbeddedParameterC
   // if needed.
   protected final ButtonBar pnlButtons;
   // Footer message
+  @Nullable
   protected final Region footerMessage;
   // the centerPane is empty and used as the main container for all parameter components
   protected final BorderPane mainPane;
@@ -110,7 +117,7 @@ public class ParameterSetupPane extends BorderPane implements EmbeddedParameterC
    * @param message: html-formatted text
    */
   public ParameterSetupPane(boolean valueCheckRequired, ParameterSet parameters,
-      boolean addOkButton, Region message) {
+      boolean addOkButton, @Nullable Region message) {
     this(valueCheckRequired, parameters, addOkButton, false, message, true, true);
   }
 
@@ -120,7 +127,8 @@ public class ParameterSetupPane extends BorderPane implements EmbeddedParameterC
    * @param message: html-formatted text
    */
   public ParameterSetupPane(boolean valueCheckRequired, ParameterSet parameters,
-      boolean addOkButton, boolean addCancelButton, Region message, boolean addParamComponents) {
+      boolean addOkButton, boolean addCancelButton, @Nullable Region message,
+      boolean addParamComponents) {
     this(valueCheckRequired, parameters, addOkButton, addCancelButton, message, addParamComponents,
         true);
   }
@@ -129,8 +137,8 @@ public class ParameterSetupPane extends BorderPane implements EmbeddedParameterC
    * Method to display setup dialog with a html-formatted footer message at the bottom.
    */
   public ParameterSetupPane(boolean valueCheckRequired, ParameterSet parameters,
-      boolean addOkButton, boolean addCancelButton, Region message, boolean addParamComponents,
-      boolean addHelp) {
+      boolean addOkButton, boolean addCancelButton, @Nullable Region message,
+      boolean addParamComponents, boolean addHelp) {
     this(valueCheckRequired, parameters, addOkButton, addCancelButton, message, addParamComponents,
         addHelp, true);
   }
@@ -139,8 +147,8 @@ public class ParameterSetupPane extends BorderPane implements EmbeddedParameterC
    * Method to display setup dialog with a html-formatted footer message at the bottom.
    */
   public ParameterSetupPane(boolean valueCheckRequired, ParameterSet parameters,
-      boolean addOkButton, boolean addCancelButton, Region message, boolean addParamComponents,
-      boolean addHelp, boolean addScrollPane) {
+      boolean addOkButton, boolean addCancelButton, @Nullable Region message,
+      boolean addParamComponents, boolean addHelp, boolean addScrollPane) {
     this.valueCheckRequired = valueCheckRequired;
     this.parameterSet = parameters;
     this.helpURL = parameters.getClass().getResource("help/help.html");
@@ -150,7 +158,10 @@ public class ParameterSetupPane extends BorderPane implements EmbeddedParameterC
     mainPane = this;
 
     // Use main CSS
-    getStylesheets().addAll(MZmineCore.getDesktop().getMainWindow().getScene().getStylesheets());
+    if (DesktopService.isGUI()) {
+      // may be called in headless mode for graphics export
+      getStylesheets().addAll(MZmineCore.getDesktop().getMainWindow().getScene().getStylesheets());
+    }
 
     centerPane = new BorderPane();
 
@@ -449,20 +460,25 @@ public class ParameterSetupPane extends BorderPane implements EmbeddedParameterC
 
   protected void addListenersToNode(Node node) {
     if (node instanceof TextField textField) {
-      textField.textProperty()
-          .addListener(((observable, oldValue, newValue) -> parametersChanged()));
+      textField.textProperty().addListener(((_, _, _) -> parametersChanged()));
+    } else if (node instanceof FeatureListsComponent fselect) {
+      fselect.currentlySelectedProperty().addListener(((_, _, _) -> parametersChanged()));
+    } else if (node instanceof RawDataFilesComponent rselect) {
+      rselect.currentlySelectedProperty().addListener(((_, _, _) -> parametersChanged()));
+    } else if (node instanceof SpectralLibrarySelectionComponent rselect) {
+      rselect.currentlySelectedProperty().addListener(((_, _, _) -> parametersChanged()));
     } else if (node instanceof ComboBox<?> comboComp) {
-      comboComp.valueProperty()
-          .addListener(((observable, oldValue, newValue) -> parametersChanged()));
+      comboComp.valueProperty().addListener(((_, _, _) -> parametersChanged()));
     } else if (node instanceof ChoiceBox) {
       ChoiceBox<?> choiceBox = (ChoiceBox) node;
-      choiceBox.valueProperty()
-          .addListener(((observable, oldValue, newValue) -> parametersChanged()));
+      choiceBox.valueProperty().addListener(((_, _, _) -> parametersChanged()));
     } else if (node instanceof CheckBox checkBox) {
-      checkBox.selectedProperty()
-          .addListener(((observable, oldValue, newValue) -> parametersChanged()));
+      checkBox.selectedProperty().addListener(((_, _, _) -> parametersChanged()));
     } else if (node instanceof ListView listview) {
-      listview.getItems().addListener((ListChangeListener) change -> parametersChanged());
+      listview.getItems().addListener((ListChangeListener) _ -> parametersChanged());
+    } else if (node instanceof CheckComboBox<?> checkCombo) {
+      checkCombo.getCheckModel().getCheckedIndices()
+          .addListener((ListChangeListener<? super Integer>) _ -> parametersChanged());
     } else if (node instanceof ModuleOptionsEnumComponent<?> options) {
       options.addSubParameterChangedListener(this::parametersChanged);
     } else if (node instanceof EmbeddedParameterComponentProvider prov) {

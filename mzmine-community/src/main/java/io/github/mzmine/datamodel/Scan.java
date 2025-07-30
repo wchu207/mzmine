@@ -155,7 +155,7 @@ public interface Scan extends MassSpectrum, Comparable<Scan> {
   /**
    * @return Retention time of this scan, if it exists
    */
-  default Integer getRetentionIndex() { return null; }
+  default Float getRetentionIndex() { return null; }
 
   /**
    * @return The injection time of this scan or null.
@@ -171,7 +171,7 @@ public interface Scan extends MassSpectrum, Comparable<Scan> {
   /**
    * @return The actual scanning range of the instrument
    */
-  @NotNull Range<Double> getScanningMZRange();
+  @Nullable Range<Double> getScanningMZRange();
 
   /**
    * @return The {@link MsMsInfo}. If null, this is not an MSn scan.

@@ -110,7 +110,7 @@ public class GCAlignerTask extends AbstractFeatureListTask {
         getMemoryMapStorage(), rowAligner, featureCloner, FeatureListRowSorter.DEFAULT_RT,
         postProcessor);
 
-    alignedFeatureList = listAligner.alignFeatureLists(FeatureListRowSorter.DEFAULT_RT);
+    alignedFeatureList = listAligner.alignFeatureLists();
     if (alignedFeatureList == null || isCanceled()) {
       return;
     }

@@ -37,6 +37,7 @@ import io.github.mzmine.datamodel.Scan;
 import io.github.mzmine.datamodel.featuredata.FeatureDataUtils;
 import io.github.mzmine.datamodel.featuredata.IonTimeSeries;
 import io.github.mzmine.datamodel.featuredata.impl.SimpleIonTimeSeries;
+import io.github.mzmine.datamodel.features.columnar_data.ColumnarModularDataModelRow;
 import io.github.mzmine.datamodel.features.types.DataType;
 import io.github.mzmine.datamodel.features.types.DetectionType;
 import io.github.mzmine.datamodel.features.types.FeatureDataType;
@@ -56,6 +57,7 @@ import io.github.mzmine.datamodel.features.types.numbers.IntensityRangeType;
 import io.github.mzmine.datamodel.features.types.numbers.MZRangeType;
 import io.github.mzmine.datamodel.features.types.numbers.MZType;
 import io.github.mzmine.datamodel.features.types.numbers.MobilityRangeType;
+import io.github.mzmine.datamodel.features.types.numbers.RIType;
 import io.github.mzmine.datamodel.features.types.numbers.RTRangeType;
 import io.github.mzmine.datamodel.features.types.numbers.RTType;
 import io.github.mzmine.datamodel.features.types.numbers.TailingFactorType;
@@ -74,8 +76,6 @@ import java.util.stream.Collectors;
 
 import io.github.mzmine.util.spectraldb.entry.SpectralDBAnnotation;
 import javafx.collections.FXCollections;
-import javafx.collections.MapChangeListener;
-import javafx.collections.ObservableMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -84,10 +84,9 @@ import org.jetbrains.annotations.Nullable;
  *
  * @author Robin Schmid (robinschmid@uni-muenster.de)
  */
-public class ModularFeature implements Feature, ModularDataModel {
+public class ModularFeature extends ColumnarModularDataModelRow implements Feature {
 
   private static final Logger logger = Logger.getLogger(ModularFeature.class.getName());
-  private final ObservableMap<DataType, Object> map = FXCollections.observableMap(new HashMap<>());
   // buffert col charts and nodes
   @NotNull
   private final ModularFeatureList flist;
@@ -95,14 +94,8 @@ public class ModularFeature implements Feature, ModularDataModel {
   private FeatureListRow parentRow;
 
   public ModularFeature(@NotNull ModularFeatureList flist) {
+    super(flist.getFeaturesSchema());
     this.flist = flist;
-
-    //
-    map.addListener((MapChangeListener<? super DataType, ? super Object>) change -> {
-      if (change.wasAdded()) {
-        this.flist.addFeatureType(change.getKey());
-      }
-    });
   }
 
   // NOT TESTED
@@ -283,12 +276,6 @@ public class ModularFeature implements Feature, ModularDataModel {
   @Override
   public Set<DataType> getTypes() {
     return flist.getFeatureTypes();
-  }
-
-  // todo make this private?
-  @Override
-  public ObservableMap<DataType, Object> getMap() {
-    return map;
   }
 
   /**
@@ -499,21 +486,17 @@ public class ModularFeature implements Feature, ModularDataModel {
 
   @Override
   public void addSpectralLibraryMatches(List<SpectralDBAnnotation> matches) {
-    synchronized (getMap()) {
-      List<SpectralDBAnnotation> old = get(SpectralLibraryMatchesType.class);
-      if (old == null) {
-        old = new ArrayList<>();
-      }
-      old.addAll(matches);
-      set(SpectralLibraryMatchesType.class, old);
+    List<SpectralDBAnnotation> old = get(SpectralLibraryMatchesType.class);
+    if (old == null) {
+      old = new ArrayList<>();
     }
+    old.addAll(matches);
+    set(SpectralLibraryMatchesType.class, old);
   }
 
   @Override
   public void setSpectralLibraryMatch(List<SpectralDBAnnotation> matches) {
-    synchronized (getMap()) {
-      set(SpectralLibraryMatchesType.class, matches);
-    }
+    set(SpectralLibraryMatchesType.class, matches);
   }
 
   @Override
@@ -542,12 +525,12 @@ public class ModularFeature implements Feature, ModularDataModel {
   }
 
   @Override
-  public Integer getRI() {
+  public Float getRI() {
     return get(RIType.class);
   }
 
   @Override
-  public void setRI(int ri) {
+  public void setRI(float ri) {
     set(RIType.class, ri);
   }
 

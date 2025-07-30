@@ -36,10 +36,9 @@ import io.github.mzmine.datamodel.RawDataFile;
 import io.github.mzmine.datamodel.Scan;
 import io.github.mzmine.datamodel.featuredata.IonTimeSeries;
 import io.github.mzmine.util.scans.FragmentScanSorter;
+import io.github.mzmine.util.spectraldb.entry.SpectralDBAnnotation;
 import java.util.ArrayList;
 import java.util.List;
-
-import io.github.mzmine.util.spectraldb.entry.SpectralDBAnnotation;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -76,12 +75,12 @@ public interface Feature {
   /**
    * This method returns retention index of the feature if available
    */
-  Integer getRI();
+  Float getRI();
 
   /**
    * Sets retention index of the feature
    */
-  void setRI(int ri);
+  void setRI(float ri);
 
   /**
    * This method returns the raw height of the feature
@@ -344,11 +343,6 @@ public interface Feature {
 
   void setFeatureInformation(FeatureInformation featureInfo);
   // End dulab Edit
-
-  @Nullable
-  default Integer getParentChromatogramRowID() {
-    return null;
-  }
 
   @NotNull FeatureList getFeatureList();
 

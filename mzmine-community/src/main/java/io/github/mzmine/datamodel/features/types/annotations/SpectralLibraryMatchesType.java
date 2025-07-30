@@ -27,7 +27,6 @@ package io.github.mzmine.datamodel.features.types.annotations;
 
 import io.github.mzmine.datamodel.FeatureIdentity;
 import io.github.mzmine.datamodel.MZmineProject;
-import io.github.mzmine.datamodel.MobilityType;
 import io.github.mzmine.datamodel.RawDataFile;
 import io.github.mzmine.datamodel.features.*;
 import io.github.mzmine.datamodel.features.compoundannotations.FeatureAnnotation;
@@ -42,6 +41,7 @@ import io.github.mzmine.datamodel.features.types.annotations.compounddb.NPClassi
 import io.github.mzmine.datamodel.features.types.annotations.compounddb.NPClassifierSuperclassType;
 import io.github.mzmine.datamodel.features.types.annotations.formula.FormulaType;
 import io.github.mzmine.datamodel.features.types.annotations.iin.IonAdductType;
+import io.github.mzmine.datamodel.features.types.identifiers.EntryIdType;
 import io.github.mzmine.datamodel.features.types.modifiers.AnnotationType;
 import io.github.mzmine.datamodel.features.types.modifiers.BindingsType;
 import io.github.mzmine.datamodel.features.types.numbers.*;
@@ -54,15 +54,11 @@ import io.github.mzmine.util.spectraldb.entry.DBEntryField;
 import io.github.mzmine.util.spectraldb.entry.SpectralDBAnnotation;
 import io.github.mzmine.util.spectraldb.entry.SpectralDBFeatureIdentity;
 import io.github.mzmine.util.spectraldb.entry.SpectralLibraryEntry;
-
-import java.lang.reflect.Array;
 import java.util.*;
 import java.util.Map.Entry;
 import javax.xml.stream.XMLStreamException;
 import javax.xml.stream.XMLStreamReader;
 import javax.xml.stream.XMLStreamWriter;
-
-import javafx.util.Pair;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -89,7 +85,7 @@ public class SpectralLibraryMatchesType extends ListWithSubsType<SpectralDBAnnot
       // classifiers
       new ClassyFireSuperclassType(), new ClassyFireClassType(), new ClassyFireSubclassType(),
       new ClassyFireParentType(), new NPClassifierSuperclassType(), new NPClassifierClassType(),
-      new NPClassifierPathwayType(),
+      new NPClassifierPathwayType(), //
       new NeutralMassType(),//
       new PrecursorMZType(),//
       new MzAbsoluteDifferenceType(),//
@@ -97,7 +93,8 @@ public class SpectralLibraryMatchesType extends ListWithSubsType<SpectralDBAnnot
       new RtAbsoluteDifferenceType(),//
       new CCSType(),//
       new CCSRelativeErrorType(),//
-      new CommentType());
+      new CommentType(), //
+      new EntryIdType());
 
   @NotNull
   @Override
@@ -113,37 +110,44 @@ public class SpectralLibraryMatchesType extends ListWithSubsType<SpectralDBAnnot
   }
 
   @Override
-  public <K> @Nullable K map(@NotNull final DataType<K> subType,
-                             final SpectralDBAnnotation match) {
+  public <K> @Nullable K map(@NotNull final DataType<K> subType, final SpectralDBAnnotation match) {
     final SpectralLibraryEntry entry = match.getEntry();
     return (K) switch (subType) {
-      case SpectralLibraryMatchesType __ -> match;
-      case CompoundNameType __ -> entry.getField(DBEntryField.NAME).orElse("").toString();
-      case FormulaType __ -> entry.getField(DBEntryField.FORMULA).orElse("").toString();
-      case IonAdductType __ -> entry.getField(DBEntryField.ION_TYPE).orElse("").toString();
-      case MolecularStructureType __ -> entry.getStructure();
-      case SmilesStructureType __ -> entry.getField(DBEntryField.SMILES).orElse("").toString();
-      case InChIStructureType __ -> entry.getField(DBEntryField.INCHI).orElse("").toString();
-      case ClassyFireSuperclassType __ -> entry.getField(DBEntryField.CLASSYFIRE_SUPERCLASS).orElse("").toString();
-      case ClassyFireClassType __ -> entry.getField(DBEntryField.CLASSYFIRE_CLASS).orElse("").toString();
-      case ClassyFireSubclassType __ -> entry.getField(DBEntryField.CLASSYFIRE_SUBCLASS).orElse("").toString();
-      case ClassyFireParentType __ -> entry.getField(DBEntryField.CLASSYFIRE_PARENT).orElse("").toString();
-      case NPClassifierSuperclassType __ -> entry.getField(DBEntryField.NPCLASSIFIER_SUPERCLASS).orElse("").toString();
-      case NPClassifierClassType __ -> entry.getField(DBEntryField.NPCLASSIFIER_CLASS).orElse("").toString();
-      case NPClassifierPathwayType __ -> entry.getField(DBEntryField.NPCLASSIFIER_PATHWAY).orElse("").toString();
-      case SimilarityType __ -> (float) match.getSimilarity().getScore();
+      case SpectralLibraryMatchesType _ -> match;
+      case CompoundNameType _ -> entry.getField(DBEntryField.NAME).orElse("").toString();
+      case FormulaType _ -> entry.getField(DBEntryField.FORMULA).orElse("").toString();
+      case IonAdductType _ -> entry.getField(DBEntryField.ION_TYPE).orElse("").toString();
+      case MolecularStructureType _ -> entry.getStructure();
+      case SmilesStructureType _ -> entry.getField(DBEntryField.SMILES).orElse("").toString();
+      case InChIStructureType _ -> entry.getField(DBEntryField.INCHI).orElse("").toString();
+      case ClassyFireSuperclassType _ ->
+          entry.getField(DBEntryField.CLASSYFIRE_SUPERCLASS).orElse("").toString();
+      case ClassyFireClassType _ ->
+          entry.getField(DBEntryField.CLASSYFIRE_CLASS).orElse("").toString();
+      case ClassyFireSubclassType _ ->
+          entry.getField(DBEntryField.CLASSYFIRE_SUBCLASS).orElse("").toString();
+      case ClassyFireParentType _ ->
+          entry.getField(DBEntryField.CLASSYFIRE_PARENT).orElse("").toString();
+      case NPClassifierSuperclassType _ ->
+          entry.getField(DBEntryField.NPCLASSIFIER_SUPERCLASS).orElse("").toString();
+      case NPClassifierClassType _ ->
+          entry.getField(DBEntryField.NPCLASSIFIER_CLASS).orElse("").toString();
+      case NPClassifierPathwayType _ ->
+          entry.getField(DBEntryField.NPCLASSIFIER_PATHWAY).orElse("").toString();
+      case SimilarityType _ -> (float) match.getSimilarity().getScore();
       case ExplainedIntensityPercentType __ -> match.getSimilarity().getExplainedLibraryIntensity();
-      case MatchingSignalsType __ -> match.getSimilarity().getOverlap();
-      case PrecursorMZType __ -> entry.getField(DBEntryField.PRECURSOR_MZ).orElse(null);
-      case NeutralMassType __ -> entry.getField(DBEntryField.EXACT_MASS).orElse(null);
-      case CCSType __ -> entry.getOrElse(DBEntryField.CCS, null);
-      case CCSRelativeErrorType __ -> match.getCCSError();
-      case RtAbsoluteDifferenceType __ -> match.getRtAbsoluteError();
-      case MzAbsoluteDifferenceType __ -> match.getMzAbsoluteError();
-      case MzPpmDifferenceType __ -> match.getMzPpmError();
+      case MatchingSignalsType _ -> match.getSimilarity().getOverlap();
+      case PrecursorMZType _ -> entry.getField(DBEntryField.PRECURSOR_MZ).orElse(null);
+      case NeutralMassType _ -> entry.getField(DBEntryField.EXACT_MASS).orElse(null);
+      case CCSType _ -> entry.getOrElse(DBEntryField.CCS, null);
+      case CCSRelativeErrorType _ -> match.getCCSError();
+      case RtAbsoluteDifferenceType _ -> match.getRtAbsoluteError();
+      case MzAbsoluteDifferenceType _ -> match.getMzAbsoluteError();
+      case MzPpmDifferenceType _ -> match.getMzPpmError();
+      case CommentType _ -> entry.getOrElse(DBEntryField.COMMENT, null);
+      case EntryIdType _ -> entry.getOrElse(DBEntryField.ENTRY_ID, null);
       case RIType __ ->
-          entry.getField(DBEntryField.RI).orElse(null) != null ? ((RIRecord) entry.getField(DBEntryField.RI).get()).getRI(RIColumn.SEMIPOLAR) : null;
-      case CommentType __ -> entry.getOrElse(DBEntryField.COMMENT, null);
+          entry.getField(DBEntryField.RETENTION_INDEX).orElse(null) != null ? ((RIRecord) entry.getField(DBEntryField.RETENTION_INDEX).get()).getRI(RIColumn.SEMIPOLAR) : null;
       default -> throw new UnsupportedOperationException(
           "DataType %s is not covered in map".formatted(subType.toString()));
     };
@@ -157,8 +161,8 @@ public class SpectralLibraryMatchesType extends ListWithSubsType<SpectralDBAnnot
 
   @Override
   public void saveToXML(@NotNull XMLStreamWriter writer, @Nullable Object value,
-                        @NotNull ModularFeatureList flist, @NotNull ModularFeatureListRow row,
-                        @Nullable ModularFeature feature, @Nullable RawDataFile file) throws XMLStreamException {
+      @NotNull ModularFeatureList flist, @NotNull ModularFeatureListRow row,
+      @Nullable ModularFeature feature, @Nullable RawDataFile file) throws XMLStreamException {
     if (value == null) {
       return;
     }
@@ -179,8 +183,8 @@ public class SpectralLibraryMatchesType extends ListWithSubsType<SpectralDBAnnot
 
   @Override
   public Object loadFromXML(@NotNull XMLStreamReader reader, @NotNull MZmineProject project,
-                            @NotNull ModularFeatureList flist, @NotNull ModularFeatureListRow row,
-                            @Nullable ModularFeature feature, @Nullable RawDataFile file) throws XMLStreamException {
+      @NotNull ModularFeatureList flist, @NotNull ModularFeatureListRow row,
+      @Nullable ModularFeature feature, @Nullable RawDataFile file) throws XMLStreamException {
 
     if (!(reader.isStartElement() && reader.getLocalName().equals(CONST.XML_DATA_TYPE_ELEMENT)
         && reader.getAttributeValue(null, CONST.XML_DATA_TYPE_ID_ATTR).equals(getUniqueID()))) {

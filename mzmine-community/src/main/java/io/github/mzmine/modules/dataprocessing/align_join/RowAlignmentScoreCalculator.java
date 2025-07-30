@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2004-2022 The MZmine Development Team
+ * Copyright (c) 2004-2025 The mzmine Development Team
  *
  * Permission is hereby granted, free of charge, to any person
  * obtaining a copy of this software and associated documentation
@@ -39,10 +39,7 @@ import io.github.mzmine.parameters.parametertypes.tolerances.RTTolerance;
 import io.github.mzmine.parameters.parametertypes.tolerances.RITolerance;
 import io.github.mzmine.parameters.parametertypes.tolerances.mobilitytolerance.MobilityTolerance;
 import io.github.mzmine.util.FeatureListUtils;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
-import javafx.collections.transformation.SortedList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -52,7 +49,7 @@ import org.jetbrains.annotations.Nullable;
 public class RowAlignmentScoreCalculator {
 
 
-  private final Map<RawDataFile, SortedList<FeatureListRow>> originalRowsMap;
+  private final List<OriginalRows> originalRowsMap;
   private final MZTolerance mzTol;
   private final RTTolerance rtTol;
   private final MobilityTolerance mobTol;
@@ -72,7 +69,6 @@ public class RowAlignmentScoreCalculator {
       @NotNull MZTolerance mzTol, @Nullable RTTolerance rtTol, @Nullable RITolerance riTol, @Nullable MobilityTolerance mobTol,
       double mzWeight, double rtWeight, double riWeight, double mobilityWeight) {
 
-    originalRowsMap = new HashMap<>(originalFeatureLists.size());
     this.mzTol = mzTol;
     this.rtTol = rtTol;
     this.mobTol = mobTol;
@@ -80,9 +76,8 @@ public class RowAlignmentScoreCalculator {
     this.rtWeight = rtWeight;
     this.riWeight = riWeight;
     this.mobilityWeight = mobilityWeight;
-    for (FeatureList flist : originalFeatureLists) {
-      originalRowsMap.put(flist.getRawDataFile(0), flist.getRows().sorted(MZ_ASCENDING));
-    }
+
+    this.originalRowsMap = originalFeatureLists.stream().map(OriginalRows::create).toList();
     totalSamples = originalRowsMap.size();
   }
 
@@ -94,7 +89,7 @@ public class RowAlignmentScoreCalculator {
    */
   public @NotNull AlignmentScores calcScore(@NotNull FeatureListRow alignedRow) {
     Float rt = alignedRow.getAverageRT();
-    Integer ri = alignedRow.getAverageRI();
+    Float ri = alignedRow.getAverageRI();
     Float mobility = alignedRow.getAverageMobility();
     Double mz = alignedRow.getAverageMZ();
     var mzRange = mzTol.getToleranceRange(mz);
@@ -110,15 +105,15 @@ public class RowAlignmentScoreCalculator {
     Float maxMobility = null;
     Float minRt = null;
     Float minMobility = null;
-    Integer minRi = null;
-    Integer maxRi = null;
+    Float minRi = null;
+    Float maxRi = null;
 
     double alignmentScore = 0;
     // extra features more than the aligned
     int sumExtra = 0;
-    for (var entry : originalRowsMap.entrySet()) {
-      RawDataFile raw = entry.getKey();
-      SortedList<FeatureListRow> originals = entry.getValue();
+    for (var entry : originalRowsMap) {
+      RawDataFile raw = entry.raw();
+      List<FeatureListRow> originals = entry.rowsMzSorted();
 
       // result is the number of possible features for this raw data file
       List<FeatureListRow> matchedRows = FeatureListUtils.getCandidatesWithinRanges(mzRange,
@@ -164,9 +159,18 @@ public class RowAlignmentScoreCalculator {
     float mobilityDelta = minMobility == null ? 0 : maxMobility - minMobility;
     double mzDelta = minMz == null ? 0 : maxMz - minMz;
 
-    float ppm = (float) (mzDelta/mz * 1_000_000f);
+    float ppm = (float) (mzDelta / mz * 1_000_000f);
 
     return new AlignmentScores(rate, testedAlignedFeatures, sumExtra, (float) alignmentScore, ppm,
         mzDelta, rtDelta, mobilityDelta);
+  }
+
+  public record OriginalRows(RawDataFile raw, List<FeatureListRow> rowsMzSorted) {
+
+    public static OriginalRows create(FeatureList flist) {
+      final List<FeatureListRow> copy = flist.getRowsCopy();
+      copy.sort(MZ_ASCENDING);
+      return new OriginalRows(flist.getRawDataFile(0), copy);
+    }
   }
 }

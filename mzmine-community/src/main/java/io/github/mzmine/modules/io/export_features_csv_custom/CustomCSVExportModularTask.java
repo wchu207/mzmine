@@ -289,7 +289,7 @@ public class CustomCSVExportModularTask extends AbstractTask implements Processe
       currentRow.add(row.getID().toString());
       for (var raw : raws) {
         if (row.hasFeature(raw)) {
-          Integer ri = row.getFeature(raw).getRI();
+          Float ri = row.getFeature(raw).getRI();
           currentRow.add(ri != null ? ri.toString() : "NO RI");
         } else {
           currentRow.add("");

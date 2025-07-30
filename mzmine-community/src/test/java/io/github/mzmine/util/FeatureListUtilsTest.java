@@ -95,6 +95,7 @@ class FeatureListUtilsTest {
     f.set(MobilityType.class, values);
     f.set(DetectionType.class, FeatureStatus.DETECTED);
     ModularFeatureListRow row = new ModularFeatureListRow(flist, 1, f);
+    flist.addRow(row);
     return row;
   }
 

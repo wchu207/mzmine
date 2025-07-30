@@ -52,7 +52,7 @@ public record RowVsRowScore(double score, FeatureListRow rowToAdd,
    */
   public RowVsRowScore(final FeatureListRow rowToAddProviderOfRanges,
       final FeatureListRow alignedRow, @Nullable Range<Double> mzRange,
-      @Nullable Range<Float> rtRange, @Nullable Range <Integer> riRange, @Nullable Range<Float> mobilityRange,
+      @Nullable Range<Float> rtRange, @Nullable Range <Float> riRange, @Nullable Range<Float> mobilityRange,
       @Nullable Range<Float> ccsRange, final double mzWeight, final double rtWeight, final double riWeight,
       final double mobilityWeight, final double ccsWeight) {
     this(FeatureListUtils.getAlignmentScore(alignedRow, mzRange, rtRange, riRange, mobilityRange, ccsRange,
@@ -71,7 +71,7 @@ public record RowVsRowScore(double score, FeatureListRow rowToAdd,
    * @param similarityWeight         factors for contribution
    */
   public RowVsRowScore(final FeatureListRow rowToAddProviderOfRanges,
-      final FeatureListRow alignedRow, @Nullable Range<Float> rtRange, @Nullable Range<Integer> riRange,
+      final FeatureListRow alignedRow, @Nullable Range<Float> rtRange, @Nullable Range<Float> riRange,
       final double rtWeight, final double riWeight, double similarity, final double similarityWeight) {
     this(FeatureListUtils.getAlignmentScore(alignedRow, similarity, rtRange, riRange, rtWeight, riWeight,
         similarityWeight), rowToAddProviderOfRanges, alignedRow);

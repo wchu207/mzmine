@@ -75,7 +75,7 @@ public class RIRowAlignScorer implements FeatureRowAlignScorer {
   public void scoreRowAgainstBaseRows(final List<FeatureListRow> baseRowsByRi,
       final FeatureListRow rowToAdd, final ConcurrentLinkedDeque<RowVsRowScore> scoresList) {
 
-    final Range<Integer> riRange = riTolerance.getToleranceRange(rowToAdd.getAverageRI());
+    final Range<Float> riRange = riTolerance.getToleranceRange(rowToAdd.getAverageRI());
 
     // find all rows in the aligned rows that might match
     // Range.all is returned for missing RI, must handle as FeatureListUtils cannot seem to

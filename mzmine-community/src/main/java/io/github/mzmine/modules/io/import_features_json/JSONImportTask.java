@@ -217,7 +217,7 @@ public class JSONImportTask extends AbstractTask {
                 rtRange, mzRange, intensityRange);
 
         if (rowAsJSON.has("ri")) {
-          feature.set(RIType.class, rowAsJSON.getInt("ri"));
+          feature.set(RIType.class, rowAsJSON.getFloat("ri"));
           feature.set(RIScaleType.class, rowAsJSON.getString("ri_scale"));
         }
 

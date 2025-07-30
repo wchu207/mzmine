@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2004-2022 The MZmine Development Team
+ * Copyright (c) 2004-2025 The mzmine Development Team
  *
  * Permission is hereby granted, free of charge, to any person
  * obtaining a copy of this software and associated documentation
@@ -30,22 +30,21 @@ import io.github.mzmine.util.RIColumn;
 import io.github.mzmine.util.RIRecord;
 
 /**
- * RTTolerance allows specifying retention time tolerance it is either absolute (seconds or minutes)
- * or relative (percent) but as rest of MZmine codebase, it assumes that rt values (other than the
- * tolerance given in constructor) are in minutes in methods such as getToleranceRange or
- * checkWithinTolerance
+ * RITolerance allows specifying retention index tolerance for comparing two compounds It is an
+ * absolute unitless tolerance based on a specific RIColumn, which specifies the stationary phase
+ * within the column
  */
 public class RITolerance {
 
-  private final int tolerance;
+  private final float tolerance;
   private final RIColumn column;
 
-  public RITolerance(final int rtTolerance, RIColumn type) {
+  public RITolerance(final float rtTolerance, RIColumn type) {
     this.tolerance = rtTolerance;
     this.column = type;
   }
 
-  public int getTolerance() {
+  public float getTolerance() {
     return tolerance;
   }
 
@@ -53,17 +52,18 @@ public class RITolerance {
     return column;
   }
 
-  public Range<Integer> getToleranceRange(final Integer riValue) {
+  public Range<Float> getToleranceRange(final Float riValue) {
     // riValue may not exist depending on alkane scales
     //   Also, averaged RI is zero when riValues do not exist
-    return riValue != null && riValue != 0 ? Range.closed(riValue - tolerance, riValue + tolerance) : Range.all();
+    return riValue != null && riValue != 0 ? Range.closed(riValue - tolerance, riValue + tolerance)
+        : Range.all();
   }
 
-  public boolean checkWithinTolerance(Integer ri, RIRecord libRI) {
+  public boolean checkWithinTolerance(Float ri, RIRecord libRI) {
     return libRI == null || getToleranceRange(libRI.getRI(column)).contains(ri);
   }
 
-  public boolean checkWithinTolerance(final int ri1, final int ri2) {
+  public boolean checkWithinTolerance(final float ri1, final float ri2) {
     return getToleranceRange(ri1).contains(ri2);
   }
 

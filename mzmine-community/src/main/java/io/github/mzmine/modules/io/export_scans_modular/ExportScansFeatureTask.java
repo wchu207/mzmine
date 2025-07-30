@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2004-2024 The mzmine Development Team
+ * Copyright (c) 2004-2025 The mzmine Development Team
  *
  * Permission is hereby granted, free of charge, to any person
  * obtaining a copy of this software and associated documentation
@@ -284,7 +284,7 @@ public class ExportScansFeatureTask extends AbstractFeatureListTask {
               e.getMessage()), e);
     } catch (Throwable e) {
       error("Could not export scans file to " + outFile + " because of internal exception:"
-            + e.getMessage());
+          + e.getMessage());
       logger.log(Level.WARNING,
           String.format("Error writing scans file: %s. Message: %s", outFile.getAbsolutePath(),
               e.getMessage()), e);
@@ -372,9 +372,9 @@ public class ExportScansFeatureTask extends AbstractFeatureListTask {
         entryMap.add(key.getMZmineJsonID(), s.get().toString());
       }
     }
-    RIRecord ri = entry.getOrElse(DBEntryField.RI, null);
+    RIRecord ri = entry.getOrElse(DBEntryField.RETENTION_INDEX, null);
     if (ri != null) {
-      entryMap.add(DBEntryField.RI.getMZmineJsonID(), ri.toString());
+      entryMap.add(DBEntryField.RETENTION_INDEX.getMZmineJsonID(), ri.toString());
     }
     Double exactMass = entry.getOrElse(DBEntryField.EXACT_MASS, null);
     if (exactMass != null) {
@@ -533,8 +533,6 @@ public class ExportScansFeatureTask extends AbstractFeatureListTask {
     // create unknown to not interfere with annotation by sirius by adding to much info
     final SpectralLibraryEntry entry = entryFactory.createUnknown(null, row, f, spectrum, data,
         null, metadataMap);
-    // below here are only SIRIUS specific fields added or overwritten.
-    // all default behavior should go into {@link SpectralLibraryEntryFactory}
 
     return entry;
   }
@@ -550,7 +548,7 @@ public class ExportScansFeatureTask extends AbstractFeatureListTask {
       return List.of();
     }
 
-    // handle chimerics
+    // handle chimerics - automatically skips GC-EI scans
     final var chimericMap = handleChimericsAndFilterScansIfSelected(row, scans);
 
     scans = selectMergeAndFilterScans(scans);
@@ -562,7 +560,7 @@ public class ExportScansFeatureTask extends AbstractFeatureListTask {
         continue;
       }
 
-      var chimeric = chimericMap.getOrDefault(scan, ChimericPrecursorResults.PASSED);
+      var chimeric = chimericMap.get(scan);
 
       SpectralLibraryEntry entry = entryFactory.createUnknown(getMemoryMapStorage(), row, null,
           scan, dps, chimeric, metadataMap);

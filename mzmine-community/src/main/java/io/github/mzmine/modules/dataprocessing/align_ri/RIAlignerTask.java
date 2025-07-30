@@ -104,7 +104,7 @@ public class RIAlignerTask extends AbstractFeatureListTask {
     listAligner = new BaseFeatureListAligner(this, featureLists, featureListName,
         getMemoryMapStorage(), rowAligner, featureCloner, FeatureListRowSorter.DEFAULT_RI, postProcessor);
 
-    alignedFeatureList = listAligner.alignFeatureLists(FeatureListRowSorter.DEFAULT_RI);
+    alignedFeatureList = listAligner.alignFeatureLists();
     if (alignedFeatureList == null || isCanceled()) {
       return;
     }

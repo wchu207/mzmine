@@ -174,7 +174,7 @@ public interface FeatureListRow extends ModularDataModel {
    * Returns average RI for features on this row
    */
 
-  Integer getAverageRI();
+  Float getAverageRI();
 
   /**
    * Sets average rt for this row
@@ -522,7 +522,6 @@ public interface FeatureListRow extends ModularDataModel {
   Stream<ModularFeature> streamFeatures();
 
   void addSpectralLibraryMatches(List<SpectralDBAnnotation> matches);
-
 
   @Nullable Range<Float> getMobilityRange();
 
