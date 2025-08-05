@@ -50,6 +50,7 @@ import io.github.mzmine.datamodel.features.types.alignment.AlignmentMainType;
 import io.github.mzmine.datamodel.features.types.alignment.AlignmentScores;
 import io.github.mzmine.datamodel.features.types.numbers.IDType;
 import io.github.mzmine.datamodel.features.types.numbers.MobilityType;
+import io.github.mzmine.datamodel.features.types.numbers.RIType;
 import io.github.mzmine.gui.framework.fx.features.ParentFeatureListPaneGroup;
 import io.github.mzmine.modules.dataprocessing.align_join.RowAlignmentScoreCalculator;
 import io.github.mzmine.modules.visualization.featurelisttable_modular.FeatureTableFX;
@@ -917,7 +918,9 @@ public class FeatureListUtils {
    * mz. Otherwise sort by RT
    */
   public static @NotNull Comparator<FeatureListRow> getDefaultRowSorter(FeatureList flist) {
-    if (hasImagingData(flist)) {
+    if (flist.hasFeatureType(DataTypes.get(RIType.class))) {
+      return FeatureListRowSorter.DEFAULT_RI;
+    } else if (hasImagingData(flist)) {
       return FeatureListRowSorter.MZ_ASCENDING;
     } else {
       return FeatureListRowSorter.DEFAULT_RT;

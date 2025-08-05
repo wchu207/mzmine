@@ -108,6 +108,7 @@ public class MZmineJsonLibraryEntry {
   public Double purity;
   public Integer numSignals;
   public String internalId;
+  public String pseudospectrum;
 
   public String classyFireSuperclass;
   public String classyFireClass;
@@ -167,6 +168,7 @@ public class MZmineJsonLibraryEntry {
       case NPCLASSIFIER_SUPERCLASS -> npClassifierSuperclass;
       case NPCLASSIFIER_CLASS -> npClassifierClass;
       case NPCLASSIFIER_PATHWAY -> npClassifierPathway;
+      case PSEUDOSPECTRUM -> pseudospectrum;
       case CAS -> cas;
       case INTERNAL_ID -> internalId;
       case IUPAC_NAME -> iupacName;
@@ -270,6 +272,7 @@ public class MZmineJsonLibraryEntry {
       case INSTRUMENT_TYPE -> instrumentType = value.toString();
       case INSTRUMENT -> instrument = value.toString();
       case ION_SOURCE -> ionSource = value.toString();
+      case PSEUDOSPECTRUM -> pseudospectrum = value.toString();
       case RESOLUTION -> resolution = value.toString();
       case POLARITY -> polarity = value.toString();
       case PRINCIPAL_INVESTIGATOR -> investigator = value.toString();

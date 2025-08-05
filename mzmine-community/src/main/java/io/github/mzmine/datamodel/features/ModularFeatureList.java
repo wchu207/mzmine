@@ -620,6 +620,11 @@ public class ModularFeatureList implements FeatureList {
   public void applyDefaultRowsSorting() {
     final Comparator<FeatureListRow> comparator = FeatureListUtils.getDefaultRowSorter(this);
     featureListRows.sort(comparator);
+    int newRowID = 1;
+    for (var row : featureListRows) {
+      row.set(IDType.class, newRowID);
+      newRowID++;
+    }
   }
 
   /**

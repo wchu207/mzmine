@@ -264,7 +264,7 @@ public class JSONImportTask extends AbstractTask {
         return null;
       }
     } catch (Exception e) {
-      return null;
+      throw e;
     }
   }
 

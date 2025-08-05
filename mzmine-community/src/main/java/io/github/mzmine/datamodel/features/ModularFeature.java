@@ -526,7 +526,8 @@ public class ModularFeature extends ColumnarModularDataModelRow implements Featu
 
   @Override
   public Float getRI() {
-    return get(RIType.class);
+    Float ri = get(RIType.class);
+    return ri != null ? (float) Math.round(ri) : null;
   }
 
   @Override

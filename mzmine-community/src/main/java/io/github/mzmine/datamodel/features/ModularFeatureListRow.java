@@ -277,7 +277,8 @@ public class ModularFeatureListRow extends ColumnarModularDataModelRow implement
   }
 
   public Float getAverageRI() {
-    return get(RIType.class);
+    Float ri = get(RIType.class);
+    return ri != null ? (float) Math.round(ri) : null;
   }
 
   @Override

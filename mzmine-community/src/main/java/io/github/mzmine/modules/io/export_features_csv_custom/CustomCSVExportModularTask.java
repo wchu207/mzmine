@@ -284,8 +284,9 @@ public class CustomCSVExportModularTask extends AbstractTask implements Processe
     currentRow.addAll(raws.stream().map(RawDataFile::getName).toList());
 
     writer.writeNext(currentRow.toArray(new String[]{}));
-    for (var row : flist.getRows()) {
-      currentRow.clear();;
+    List<FeatureListRow> rows = flist.getRows().stream().sorted(Comparator.comparing(row -> row.getID())).toList();
+    for (var row : rows) {
+      currentRow.clear();
       currentRow.add(row.getID().toString());
       for (var raw : raws) {
         if (row.hasFeature(raw)) {
