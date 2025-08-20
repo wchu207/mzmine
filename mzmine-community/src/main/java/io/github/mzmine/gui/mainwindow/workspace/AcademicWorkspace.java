@@ -40,6 +40,7 @@ import io.github.mzmine.modules.dataprocessing.align_gc.GCAlignerModule;
 import io.github.mzmine.modules.dataprocessing.align_join.JoinAlignerModule;
 import io.github.mzmine.modules.dataprocessing.align_lcimage.LcImageAlignerModule;
 import io.github.mzmine.modules.dataprocessing.align_ransac.RansacAlignerModule;
+import io.github.mzmine.modules.dataprocessing.align_ri.RIAlignerModule;
 import io.github.mzmine.modules.dataprocessing.featdet_denormalize_by_inject_time.DenormalizeScansMultiplyByInjectTimeModule;
 import io.github.mzmine.modules.dataprocessing.featdet_masscalibration.MassCalibrationModule;
 import io.github.mzmine.modules.dataprocessing.featdet_massdetection.MassDetectionModule;
@@ -194,7 +195,7 @@ public final class AcademicWorkspace extends AbstractWorkspace {
         ChromatogramBlankSubtractionModule.class, MobilityMzRegionExtractionModule.class,
         NeutralLossFilterModule.class);
     addModuleMenuItems(menu, "Alignment", JoinAlignerModule.class, MergeAlignerModule.class,
-        RansacAlignerModule.class, GCAlignerModule.class,
+        RansacAlignerModule.class, GCAlignerModule.class, RIAlignerModule.class,
         LcImageAlignerModule.class); // HierarAlignerGcModule, ADAP3AlignerModule (not mit compatible)
     addModuleMenuItems(menu, "Gap filling/Recursive feature finding",
         MultiThreadPeakFinderModule.class, SameRangeGapFillerModule.class);

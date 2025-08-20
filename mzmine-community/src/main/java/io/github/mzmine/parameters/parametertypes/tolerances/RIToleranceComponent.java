@@ -53,7 +53,7 @@ public class RIToleranceComponent extends HBox {
     this.toleranceTypes = FXCollections.observableArrayList(riColumnTypes);
 
     setSpacing(5);
-    this.toleranceField = new TextField();
+    this.toleranceField = new TextField("30");
     this.toleranceField.setTextFormatter(textFormatter);
 
     this.toleranceType = new ComboBox<>(toleranceTypes);

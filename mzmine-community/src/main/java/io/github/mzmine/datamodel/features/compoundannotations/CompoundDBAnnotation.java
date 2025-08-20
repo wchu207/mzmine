@@ -390,9 +390,9 @@ public interface CompoundDBAnnotation extends Cloneable, FeatureAnnotation,
       float tol = (float) (ccs * percentCCSTolerance);
       ccsRange = Range.closed(ccs - tol, ccs + tol);
     }
-    return (float) FeatureListUtils.getAlignmentScore(row.getAverageMZ(), row.getAverageRT(),
-        row.getAverageMobility(), row.getAverageCCS(), mzRange, rtRange, mobilityRange, ccsRange, 1,
-        1, 1, 1);
+    return (float) FeatureListUtils.getAlignmentScore(row.getAverageMZ(), row.getAverageRT(), null,
+        row.getAverageMobility(), row.getAverageCCS(), mzRange, rtRange, null, mobilityRange, ccsRange, 1,
+        0, 1, 1, 1);
   }
 
   /**

@@ -45,6 +45,7 @@ import io.github.mzmine.datamodel.features.types.FeatureInformationType;
 import io.github.mzmine.datamodel.features.types.IsotopePatternType;
 import io.github.mzmine.datamodel.features.types.MobilityUnitType;
 import io.github.mzmine.datamodel.features.types.RawFileType;
+import io.github.mzmine.datamodel.features.types.annotations.RIScaleType;
 import io.github.mzmine.datamodel.features.types.numbers.AreaType;
 import io.github.mzmine.datamodel.features.types.numbers.AsymmetryFactorType;
 import io.github.mzmine.datamodel.features.types.numbers.BestScanNumberType;
