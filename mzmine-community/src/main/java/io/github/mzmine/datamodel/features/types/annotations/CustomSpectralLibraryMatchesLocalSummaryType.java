@@ -35,7 +35,7 @@ public class CustomSpectralLibraryMatchesLocalSummaryType extends StringType imp
     List<String> discoveredCompounds = new ArrayList<>();
     String[] tokens = compounds.split(";");
     for (var token : tokens) {
-      String compoundName = token.substring(0, token.indexOf("(")).trim();
+      String compoundName = token.substring(0, token.lastIndexOf("(")).trim();
       if (targets == null || targets.contains(compoundName.toLowerCase())) {
         try {
           discoveredCompounds.add(compoundName);
@@ -50,10 +50,11 @@ public class CustomSpectralLibraryMatchesLocalSummaryType extends StringType imp
     Map<String, Integer> discoveredCompounds = new HashMap<>();
     String[] tokens = compounds.split(";");
     for (var token : tokens) {
-      String compoundName = token.substring(0, token.indexOf("(")).trim();
+      String compoundName = token.substring(0, token.lastIndexOf("(")).trim();
       if (targets == null || targets.contains(compoundName.toLowerCase())) {
         try {
-          String count = StringUtils.substringBetween(token, "(", ")");
+          String[] inParentheses = StringUtils.substringsBetween(token, "(", ")");
+          String count = inParentheses[inParentheses.length - 1];
           discoveredCompounds.put(compoundName.toLowerCase(), Integer.parseInt(count));
         } catch (Exception e) {
         }
