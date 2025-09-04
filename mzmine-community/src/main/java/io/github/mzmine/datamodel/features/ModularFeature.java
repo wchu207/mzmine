@@ -45,6 +45,7 @@ import io.github.mzmine.datamodel.features.types.FeatureInformationType;
 import io.github.mzmine.datamodel.features.types.IsotopePatternType;
 import io.github.mzmine.datamodel.features.types.MobilityUnitType;
 import io.github.mzmine.datamodel.features.types.RawFileType;
+import io.github.mzmine.datamodel.features.types.annotations.RIScaleType;
 import io.github.mzmine.datamodel.features.types.numbers.AreaType;
 import io.github.mzmine.datamodel.features.types.numbers.AsymmetryFactorType;
 import io.github.mzmine.datamodel.features.types.numbers.BestScanNumberType;
@@ -616,6 +617,12 @@ public class ModularFeature extends ColumnarModularDataModelRow implements Featu
   @Override
   public String toString() {
     return FeatureUtils.featureToString(this);
+  }
+
+  public String toFullString() {
+    return getFeatureList().getFeatureTypes().stream().sorted(DataType::compareTo).map(
+            type -> "{%s,%s}".formatted(type.getUniqueID(), type.getFormattedString(this.get(type))))
+        .collect(Collectors.joining(","));
   }
 
   @Override

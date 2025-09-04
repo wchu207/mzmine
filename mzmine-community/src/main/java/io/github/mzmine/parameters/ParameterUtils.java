@@ -37,13 +37,17 @@ import io.github.mzmine.parameters.parametertypes.EmbeddedParameter;
 import io.github.mzmine.parameters.parametertypes.EmbeddedParameterSet;
 import io.github.mzmine.parameters.parametertypes.EncryptionKeyParameter;
 import io.github.mzmine.parameters.parametertypes.HiddenParameter;
+import io.github.mzmine.parameters.parametertypes.OptionalParameterComponent;
 import io.github.mzmine.parameters.parametertypes.filenames.FileNameSuffixExportParameter;
 import io.github.mzmine.parameters.parametertypes.filenames.FileNamesParameter;
 import io.github.mzmine.parameters.parametertypes.selectors.FeatureListsParameter;
 import io.github.mzmine.parameters.parametertypes.selectors.RawDataFilesParameter;
+import io.github.mzmine.parameters.parametertypes.submodules.OptionalModuleComponent;
+import io.github.mzmine.util.XMLUtils;
 import io.github.mzmine.util.concurrent.CloseableReentrantReadWriteLock;
 import io.github.mzmine.util.files.FileAndPathUtil;
 import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -56,10 +60,19 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+import javafx.beans.property.BooleanProperty;
+import javafx.scene.Node;
+import javafx.scene.control.CheckBox;
+import javafx.scene.control.RadioButton;
+import javafx.scene.control.ToggleButton;
+import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.parsers.ParserConfigurationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
+import org.w3c.dom.NodeList;
+import org.xml.sax.SAXException;
 
 public class ParameterUtils {
 
@@ -533,5 +546,79 @@ public class ParameterUtils {
       param.saveValueToXML(paramElement);
 
     }
+  }
+
+  /**
+   * Creates XML string from parameters
+   *
+   * @param parameterSet
+   * @return
+   */
+  public static String saveValuesToXMLString(ParameterSet parameterSet) {
+    try {
+      final Document document = DocumentBuilderFactory.newInstance().newDocumentBuilder()
+          .newDocument();
+      final Element element = document.createElement("parameterset");
+      document.appendChild(element);
+
+      // Serialize batch queue.
+      parameterSet.saveValuesToXML(element);
+      return XMLUtils.saveToString(document);
+    } catch (Exception exception) {
+      logger.log(Level.SEVERE,
+          "Error while creating XML string for parameter set " + parameterSet.getClass().getName(),
+          exception);
+      return null;
+    }
+  }
+
+  public static void loadValuesFromXMLString(ParameterSet parameterSet, String xml)
+      throws ParserConfigurationException, IOException, SAXException {
+    final Document document = XMLUtils.load(xml);
+    final NodeList stepParameters = document.getElementsByTagName("parameterset");
+    if (stepParameters.getLength() == 0) {
+      throw new IllegalArgumentException("No step_parameters element found in xml string.");
+    }
+    final org.w3c.dom.Node element = stepParameters.item(0);
+    parameterSet.loadValuesFromXML((Element) element);
+  }
+
+  /**
+   * Useful to check if all parameters are {@link UserParameter} with an editing component.
+   */
+  public static void assertAllUserParameters(Parameter<?>... parameters) {
+    for (Parameter<?> parameter : parameters) {
+      if (!(parameter instanceof UserParameter<?, ?>)) {
+        throw new IllegalArgumentException(
+            "All parameters must be of type UserParameter. Parameter " + parameter.getName()
+                + " is of type " + parameter.getClass().getName());
+      }
+    }
+  }
+
+  public static @Nullable BooleanProperty getSelectedProperty(Node comp) {
+    return switch (comp) {
+      case CheckBox c -> c.selectedProperty();
+      case OptionalParameterComponent<?> c -> c.selectedProperty();
+      case OptionalModuleComponent c -> c.selectedProperty();
+      case RadioButton c -> c.selectedProperty();
+      case ToggleButton c -> c.selectedProperty();
+      case null, default -> null;
+    };
+  }
+
+  public static List<? extends Parameter<?>> mapToActualParameters(ParameterSet parameterSet,
+      List<? extends Parameter<?>> searchParameters) {
+    List<Parameter<?>> actualParameters = new ArrayList<>();
+    for (Parameter<?> searchParameter : searchParameters) {
+      final Parameter<?> parameter = parameterSet.getParameter(searchParameter);
+      if (parameter == null) {
+        throw new IllegalArgumentException(
+            "Parameter " + searchParameter.getName() + " not found in parameter set "
+                + parameterSet.getClass().getName());
+      }
+      actualParameters.add(parameter);
+    }
+    return actualParameters;
   }
 }
