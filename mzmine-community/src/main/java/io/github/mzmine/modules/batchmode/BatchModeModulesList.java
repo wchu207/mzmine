@@ -128,6 +128,7 @@ import io.github.mzmine.modules.io.export_ccsbase.CcsBaseExportModule;
 import io.github.mzmine.modules.io.export_compoundAnnotations_csv.CompoundAnnotationsCSVExportModule;
 import io.github.mzmine.modules.io.export_features_all_speclib_matches.ExportAllIdsGraphicalModule;
 import io.github.mzmine.modules.io.export_features_csv.CSVExportModularModule;
+import io.github.mzmine.modules.io.export_features_csv_custom.CustomCSVExportModularModule;
 import io.github.mzmine.modules.io.export_features_csv_legacy.LegacyCSVExportModule;
 import io.github.mzmine.modules.io.export_features_featureML.FeatureMLExportModularModule;
 import io.github.mzmine.modules.io.export_features_gnps.fbmn.GnpsFbmnExportAndSubmitModule;
@@ -405,6 +406,7 @@ public class BatchModeModulesList {
           SiriusExportModule.class, //
           MZTabmImportModule.class, //
           CSVExportModularModule.class, //
+          CustomCSVExportModularModule.class, //
           LegacyCSVExportModule.class, //
           CompoundAnnotationsCSVExportModule.class, //
           LibraryAnalysisCSVExportModule.class, //
