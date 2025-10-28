@@ -28,6 +28,7 @@ package io.github.mzmine.modules.dataprocessing.align_ri;
 import io.github.mzmine.main.MZmineCore;
 import io.github.mzmine.parameters.Parameter;
 import io.github.mzmine.parameters.impl.SimpleParameterSet;
+import io.github.mzmine.parameters.parametertypes.BooleanParameter;
 import io.github.mzmine.parameters.parametertypes.DoubleParameter;
 import io.github.mzmine.parameters.parametertypes.OriginalFeatureListHandlingParameter;
 import io.github.mzmine.parameters.parametertypes.StringParameter;
@@ -60,13 +61,17 @@ public class RIAlignerParameters extends SimpleParameterSet {
   public static final StringParameter FEATURE_LIST_NAME = new StringParameter("Feature list name",
       "Feature list name", "Aligned feature list");
 
+  public static final BooleanParameter USE_POST_PROCESS = new BooleanParameter("Perform post-alignment scan swapping",
+      "Substitute scans that are out-of-range in terms of m/z after alignment", true);
+
+
 
   public static final OriginalFeatureListHandlingParameter handleOriginal = new OriginalFeatureListHandlingParameter(
       false);
 
   public RIAlignerParameters() {
     super(new Parameter[]{FEATURE_LISTS, MZ_TOLERANCE, RI_TOLERANCE, RI_WEIGHT, SIMILARITY_FUNCTION,
-            FEATURE_LIST_NAME, handleOriginal},
+            FEATURE_LIST_NAME, USE_POST_PROCESS, handleOriginal},
         "https://mzmine.github.io/mzmine_documentation/module_docs/align_gcei/align_gc_ei.html");
   }
 }

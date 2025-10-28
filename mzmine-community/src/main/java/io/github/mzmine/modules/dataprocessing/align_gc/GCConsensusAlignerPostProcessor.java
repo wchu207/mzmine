@@ -17,6 +17,7 @@ import io.github.mzmine.datamodel.features.types.DataTypes;
 import io.github.mzmine.datamodel.features.types.FeatureDataType;
 import io.github.mzmine.datamodel.features.types.numbers.GcAlignMissingNumFeaturesType;
 import io.github.mzmine.datamodel.features.types.numbers.GcAlignShiftedNumFeaturesType;
+import io.github.mzmine.datamodel.features.types.numbers.GcAlignSwappedNumFeaturesType;
 import io.github.mzmine.modules.dataprocessing.align_common.FeatureAlignmentPostProcessor;
 import io.github.mzmine.parameters.parametertypes.tolerances.MZTolerance;
 import io.github.mzmine.util.RangeUtils;
@@ -55,6 +56,7 @@ public class GCConsensusAlignerPostProcessor implements FeatureAlignmentPostProc
     // debugging info types - kept for now so that users may provide more info for debugging
     flist.addRowType(DataTypes.get(GcAlignMissingNumFeaturesType.class));
     flist.addRowType(DataTypes.get(GcAlignShiftedNumFeaturesType.class));
+    flist.addRowType(DataTypes.get(GcAlignSwappedNumFeaturesType.class));
 
     int[] missingArr = flist.parallelStream().mapToInt(row -> setConsensusMainFeature(flist, row)).toArray();
     int missing = 0;
@@ -88,6 +90,7 @@ public class GCConsensusAlignerPostProcessor implements FeatureAlignmentPostProc
     final double mzTolRangeLength = RangeUtils.rangeLength(mzTolRange);
 
     int shifted = 0;
+    int swapped = 0;
     List<ModularFeature> featuresToAdd = new ArrayList<>();
     for (final ModularFeature oldFeature : row.getFeatures()) {
       if (mzTolRange.contains(oldFeature.getMZ())) {
@@ -109,6 +112,7 @@ public class GCConsensusAlignerPostProcessor implements FeatureAlignmentPostProc
       // finally add
       if (newFeature != null) {
         featuresToAdd.add(newFeature);
+        swapped++;
       }
     }
 
@@ -126,6 +130,7 @@ public class GCConsensusAlignerPostProcessor implements FeatureAlignmentPostProc
     // debugging info types - kept for now so that users may provide more info for debugging
     row.set(GcAlignMissingNumFeaturesType.class, missing);
     row.set(GcAlignShiftedNumFeaturesType.class, shifted);
+    row.set(GcAlignSwappedNumFeaturesType.class, swapped);
 
     return missing;
   }

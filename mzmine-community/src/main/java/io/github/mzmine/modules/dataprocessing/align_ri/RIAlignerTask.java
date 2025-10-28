@@ -30,8 +30,10 @@ import io.github.mzmine.datamodel.features.FeatureList;
 import io.github.mzmine.datamodel.features.ModularFeatureList;
 import io.github.mzmine.modules.MZmineModule;
 import io.github.mzmine.modules.dataprocessing.align_common.BaseFeatureListAligner;
+import io.github.mzmine.modules.dataprocessing.align_common.FeatureAlignmentPostProcessor;
 import io.github.mzmine.modules.dataprocessing.align_common.FeatureCloner;
 import io.github.mzmine.modules.dataprocessing.align_common.FeatureCloner.ExtractMzMismatchFeatureCloner;
+import io.github.mzmine.modules.dataprocessing.align_common.FeatureCloner.SimpleFeatureCloner;
 import io.github.mzmine.modules.dataprocessing.align_gc.GCConsensusAlignerPostProcessor;
 import io.github.mzmine.parameters.ParameterSet;
 import io.github.mzmine.parameters.parametertypes.OriginalFeatureListHandlingParameter.OriginalFeatureListOption;
@@ -96,10 +98,13 @@ public class RIAlignerTask extends AbstractFeatureListTask {
     logger.info(() -> "Running parallel GC aligner on " + featureLists.size() + " feature lists.");
 
     var mzTolerance = parameters.getValue(RIAlignerParameters.MZ_TOLERANCE);
-    FeatureCloner featureCloner = new ExtractMzMismatchFeatureCloner(mzTolerance);
+    FeatureCloner featureCloner = new SimpleFeatureCloner();
 
     // create the row aligner that handles the scoring
-    var postProcessor = new GCConsensusAlignerPostProcessor(mzTolerance);
+    FeatureAlignmentPostProcessor postProcessor = null;
+    if (parameters.getValue(RIAlignerParameters.USE_POST_PROCESS)) {
+      postProcessor = new GCConsensusAlignerPostProcessor(mzTolerance);
+    }
     var rowAligner = new RIRowAlignScorer(parameters);
     listAligner = new BaseFeatureListAligner(this, featureLists, featureListName,
         getMemoryMapStorage(), rowAligner, featureCloner, FeatureListRowSorter.DEFAULT_RI, postProcessor);

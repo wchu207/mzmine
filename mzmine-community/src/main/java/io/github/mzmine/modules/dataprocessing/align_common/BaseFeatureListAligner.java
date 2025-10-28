@@ -306,6 +306,7 @@ public class BaseFeatureListAligner {
     // remove next feature list's rows
     // select the next base feature list with max number of rows
     final List<FeatureListRow> nextUnalignedFeatureList = allRows.removeFirst();
+    System.out.println("Aligning list " + nextUnalignedFeatureList.getFirst().getFeatureList().getName());
     if (nextUnalignedFeatureList.isEmpty()) {
       logger.finer(
           () -> String.format("End of aligner reached. %d feature lists had no unaligned rows left",

@@ -70,6 +70,7 @@ public class CustomCSVExportModularTask extends AbstractTask implements Processe
           RTType.class,
           RTRangeType.class,
           MZType.class,
+          PeakMZType.class,
           MZRangeType.class,
           RIType.class,
           RIMinType.class,
@@ -79,6 +80,7 @@ public class CustomCSVExportModularTask extends AbstractTask implements Processe
           AreaType.class,
           IntensityRangeType.class,
           FragmentScanNumbersType.class,
+          GcAlignSwappedNumFeaturesType.class,
           CustomSpectralLibraryMatchesLocalSummaryType.class,
           CustomSpectralLibraryMatchesGlobalSummaryType.class,
           SpectralLibraryMatchesType.class
@@ -92,7 +94,7 @@ public class CustomCSVExportModularTask extends AbstractTask implements Processe
   private ArrayList<Boolean> rowMask = null;
 
   private final List<Class<? extends DataType<?>>> featureTypes = List.of(
-          MZType.class,
+          PeakMZType.class,
           RTType.class,
           RIType.class,
           RIScaleType.class,

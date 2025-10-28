@@ -29,6 +29,7 @@ import static java.util.Objects.requireNonNullElse;
 
 import io.github.mzmine.datamodel.features.Feature;
 import io.github.mzmine.datamodel.features.FeatureListRow;
+import io.github.mzmine.datamodel.features.types.numbers.RIType;
 import java.util.Comparator;
 import java.util.logging.Logger;
 
@@ -108,7 +109,8 @@ public class FeatureListRowSorter implements Comparator<FeatureListRow> {
         yield mz + requireNonNullElse(row.getAverageRT(), 0f) / 10000000.0;
       }
       case RI -> {
-        yield requireNonNullElse(row.getAverageRI(), Float.MAX_VALUE)
+        Float ri = row.get(RIType.class);
+        yield requireNonNullElse(ri, Float.MAX_VALUE)
             + requireNonNullElse(row.getAverageRT(), 0f) / 1000000.0
             + row.getAverageMZ() / 1000000000.0;
       }

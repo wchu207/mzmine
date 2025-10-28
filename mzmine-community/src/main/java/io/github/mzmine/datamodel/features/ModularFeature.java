@@ -156,6 +156,7 @@ public class ModularFeature extends ColumnarModularDataModelRow implements Featu
 
     // datapoints of feature
     //    set(DataPointsType.class, Arrays.asList(dataPointsPerScan));
+
     SimpleIonTimeSeries featureData = new SimpleIonTimeSeries(flist.getMemoryMapStorage(), mzs,
         intensities, scans);
     set(FeatureDataType.class, featureData);

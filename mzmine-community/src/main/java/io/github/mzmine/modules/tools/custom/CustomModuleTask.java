@@ -27,6 +27,7 @@ package io.github.mzmine.modules.tools.custom;
 
 import io.github.mzmine.datamodel.MZmineProject;
 import io.github.mzmine.datamodel.RawDataFile;
+import io.github.mzmine.datamodel.Scan;
 import io.github.mzmine.datamodel.features.*;
 import io.github.mzmine.datamodel.features.types.DataType;
 import io.github.mzmine.datamodel.features.types.DataTypes;
@@ -35,6 +36,7 @@ import io.github.mzmine.datamodel.features.types.annotations.*;
 import io.github.mzmine.datamodel.features.types.annotations.iin.IonIdentityListType;
 import io.github.mzmine.datamodel.features.types.networking.NetworkStatsType;
 import io.github.mzmine.datamodel.features.types.numbers.FragmentScanNumbersType;
+import io.github.mzmine.datamodel.features.types.numbers.PeakMZType;
 import io.github.mzmine.parameters.ParameterSet;
 import io.github.mzmine.taskcontrol.AbstractSimpleToolTask;
 import io.github.mzmine.taskcontrol.AbstractTask;
@@ -66,7 +68,7 @@ public class CustomModuleTask extends AbstractTask {
     for (var flist : featureLists) {
       flist.addFeatureType(new CustomSpectralLibraryMatchesLocalSummaryType());
       flist.addFeatureType(new CustomSpectralLibraryMatchesGlobalSummaryType());
-      flist.applyRowBindings();
+      flist.addFeatureType(new PeakMZType());
       rows.addAll(flist.getRows());
     }
 
@@ -76,6 +78,14 @@ public class CustomModuleTask extends AbstractTask {
         if (matches != null) {
           for (var match : matches) {
             match.getEntry().putIfNotNull(DBEntryField.COMMENT, match.getEntry().getLibraryName());
+          }
+        }
+
+        Scan representativeScan = feature.getRepresentativeScan();
+        if (representativeScan != null) {
+          Double peakMZ = representativeScan.getBasePeakMz();
+          if (peakMZ != null) {
+            feature.set(PeakMZType.class, peakMZ.toString());
           }
         }
       }
