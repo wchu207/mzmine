@@ -47,7 +47,7 @@ public abstract class NumberRangeType<T extends Number & Comparable<?>> extends
 
   // this is a trick, we need a datatype to get the sub column value
   // we use this as the first column and any other for the second
-  private static final DataType<Double> MAX_REF_TYPE = new MZType();
+  public static final DataType<Double> MAX_REF_TYPE = new MZType();
 
   protected NumberRangeType(NumberFormat defaultFormat) {
     super(defaultFormat);

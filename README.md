@@ -94,9 +94,14 @@ or
 The final mzmine distribution will be placed in build/jpackage
 
 If you encounter any problems, please contact the developers by posting an issue:
-https://github.com/mzmine/mzmine3/issues
+https://github.com/mzmine/mzmine/issues
 
 ### Contribute code (or documentation)
 
 Guides and more information is in the mzmine documentation:
 https://mzmine.github.io/mzmine_documentation/contribute_intellij.html
+
+### AI coding help
+
+Use the [claude_codex_template.md](claude_codex_template.md) for your agent. When submitting PRs
+with AI code, review the changes yourself (human review) before submitting a PR.

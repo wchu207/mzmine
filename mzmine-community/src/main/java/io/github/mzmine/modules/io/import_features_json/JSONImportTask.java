@@ -148,8 +148,8 @@ public class JSONImportTask extends AbstractTask {
       featureList.addFeatureType(new FragmentScanNumbersType());
 
       featureList.addFeatureType(new RIType());
-      featureList.addFeatureType(new RIMaxType());
-      featureList.addFeatureType(new RIMinType());
+      //featureList.addFeatureType(new RIMaxType());
+      //featureList.addFeatureType(new RIMinType());
       featureList.addFeatureType(new RIDiffType());
 
       featureList.addFeatureType(new CustomSpectralLibraryMatchesLocalSummaryType());
@@ -256,7 +256,7 @@ public class JSONImportTask extends AbstractTask {
           JSONObject similarityJSON = rowAsJSON.getJSONObject("library_match").getJSONObject("similarity");
 
           SpectralSimilarity sim = new SpectralSimilarity(similarityJSON.getString("name"), similarityJSON.getFloat("score"), similarityJSON.getInt("overlap"), similarityJSON.getFloat("explained_intensity"));
-          feature.addSpectralLibraryMatches(List.of(new SpectralDBAnnotation(entry, sim, fragScan, null, null, null)));
+          feature.addSpectralLibraryMatches(List.of(new SpectralDBAnnotation(entry, sim, fragScan, null, null, null, null)));
         }
 
         return new ModularFeatureListRow(featureList, rowId, feature);

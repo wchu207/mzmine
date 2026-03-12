@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2004-2025 The mzmine Development Team
+ * Copyright (c) 2004-2026 The mzmine Development Team
  *
  * Permission is hereby granted, free of charge, to any person
  * obtaining a copy of this software and associated documentation
@@ -44,6 +44,9 @@ import io.github.mzmine.gui.mainwindow.SimpleTab;
 import io.github.mzmine.gui.mainwindow.UsersTab;
 import io.github.mzmine.gui.mainwindow.tasksview.TasksViewController;
 import io.github.mzmine.gui.preferences.MZminePreferences;
+import io.github.mzmine.javafx.components.factories.FxTextFlows;
+import io.github.mzmine.javafx.components.factories.FxTexts;
+import io.github.mzmine.javafx.components.util.TextLabelMeasurementUtil;
 import io.github.mzmine.javafx.concurrent.threading.FxThread;
 import io.github.mzmine.javafx.dialogs.DialogLoggerUtil;
 import io.github.mzmine.javafx.util.FxColorUtil;
@@ -108,11 +111,8 @@ import javafx.scene.control.Alert;
 import javafx.scene.control.Alert.AlertType;
 import javafx.scene.control.ButtonType;
 import javafx.scene.control.CheckBox;
-import javafx.scene.control.Dialog;
 import javafx.scene.control.DialogPane;
-import javafx.scene.control.Hyperlink;
 import javafx.scene.control.Label;
-import javafx.scene.control.ScrollPane;
 import javafx.scene.image.Image;
 import javafx.scene.input.DragEvent;
 import javafx.scene.input.Dragboard;
@@ -391,7 +391,8 @@ public class MZmineGUI extends Application implements MZmineDesktop, JavaFxDeskt
         // set raw and library files to parameter
         ParameterSet param = MZmineCore.getConfiguration()
             .getModuleParameters(AllSpectralDataImportModule.class).cloneParameterSet();
-        param = AllSpectralDataImportParameters.create(ConfigService.isApplyVendorCentroiding(),
+        param = AllSpectralDataImportParameters.create(
+            ConfigService.getPreferences().getVendorImportParameters(),
             rawDataFiles.toArray(File[]::new), null, libraryFiles.toArray(File[]::new), null);
 
         // start import task for libraries and raw data files
@@ -510,6 +511,7 @@ public class MZmineGUI extends Application implements MZmineDesktop, JavaFxDeskt
 
     MZmineGUI.mainStage = stage;
     DesktopService.setDesktop(this);
+    TextLabelMeasurementUtil.init(stage.sceneProperty());
     MZminePreferences preferences = ConfigService.getPreferences();
 
     logger.finest("Initializing mzmine main window");
@@ -590,8 +592,10 @@ public class MZmineGUI extends Application implements MZmineDesktop, JavaFxDeskt
 
     // add global keys that may be added to other dialogs to receive the same key event handling
     // key typed does not work
-    // using EventFilter instead of handler as this is a top level to get all events
-    rootScene.addEventFilter(KeyEvent.KEY_RELEASED, GlobalKeyHandler.getInstance());
+    // using EventHandler to allow that other handlers before might intercept and consume the event
+    // EventFilter was used ealier to get all events but this was not needed
+    // rootScene.addEventFilter(KeyEvent.KEY_RELEASED, GlobalKeyHandler.getInstance());
+    rootScene.addEventHandler(KeyEvent.KEY_RELEASED, GlobalKeyHandler.getInstance());
 
     // check user in gui mode and show message now
     MZmineCore.checkUserRemainingDays(CurrentUserService.getUser());
@@ -701,35 +705,12 @@ public class MZmineGUI extends Application implements MZmineDesktop, JavaFxDeskt
   public void displayMessage(String title, String msg, @Nullable String url) {
     logger.info(() -> String.format("%s - %s - %s", title, msg, url));
 
-    FxThread.runLater(() -> {
-
-      Dialog<ButtonType> dialog = new Dialog<>();
-      Stage stage = (Stage) dialog.getDialogPane().getScene().getWindow();
-      stage.getScene().getStylesheets()
-          .addAll(MZmineCore.getDesktop().getMainWindow().getScene().getStylesheets());
-      stage.getIcons().add(mzMineIcon);
-      dialog.setTitle(title);
-
-      TextFlow flow = new TextFlow(new Text(msg + " "));
-      if (url != null) {
-        Hyperlink href = new Hyperlink(url);
-        flow.getChildren().add(href);
-        href.setOnAction(_ -> DesktopService.getDesktop().openWebPage(url));
-      }
-
-      var scroll = new ScrollPane(flow);
-      scroll.setFitToWidth(true);
-      scroll.setFitToHeight(true);
-      var parent = new BorderPane(scroll);
-      flow.setMaxWidth(720);
-      stage.setMaxWidth(750);
-      stage.setMaxHeight(500);
-      dialog.getDialogPane().setMaxWidth(730);
-      dialog.getDialogPane().setContent(parent);
-      dialog.getDialogPane().getButtonTypes().add(ButtonType.OK);
-      dialog.setResizable(true);
-      dialog.showAndWait();
-    });
+    final TextFlow node = FxTextFlows.newTextFlow(FxTexts.text(msg));
+    if (url != null) {
+      node.getChildren().addAll(FxTexts.text(" "), FxTexts.hyperlinkText(url));
+    }
+    // will wrap TextFlow into scrollpane
+    DialogLoggerUtil.showMessageDialog(title, node);
   }
 
   @Override

@@ -239,13 +239,16 @@ public class ParsingUtils {
   }
 
   @NotNull
-  public static String rangeToString(@NotNull Range<Comparable<?>> range) {
+  public static String rangeToString(@Nullable Range<Comparable<?>> range) {
+    if(range == null) {
+      return "";
+    }
     return "[" + range.lowerEndpoint() + SEPARATOR + range.upperEndpoint() + "]";
   }
 
   @Nullable
-  public static Range<Double> stringToDoubleRange(String str) {
-    if (str.isEmpty()) {
+  public static Range<Double> stringToDoubleRange(@Nullable String str) {
+    if (str == null || str.isEmpty()) {
       return null;
     }
     String[] vals = str.replaceAll("\\[", "").replaceAll("\\]", "").split(SEPARATOR);
@@ -256,8 +259,8 @@ public class ParsingUtils {
   }
 
   @Nullable
-  public static Range<Float> stringToFloatRange(String str) {
-    if (str.isEmpty()) {
+  public static Range<Float> stringToFloatRange(@Nullable String str) {
+    if (str == null || str.isEmpty()) {
       return null;
     }
     String[] vals = str.replaceAll("\\[", "").replaceAll("\\]", "").split(SEPARATOR);
@@ -525,7 +528,7 @@ public class ParsingUtils {
     }
 
     try {
-      return Double.valueOf(str);
+      return Double.valueOf(str.trim());
     } catch (NumberFormatException e) {
       return null;
     }
@@ -545,7 +548,7 @@ public class ParsingUtils {
     }
 
     try {
-      return Float.valueOf(str);
+      return Float.valueOf(str.trim());
     } catch (NumberFormatException e) {
       return null;
     }

@@ -27,11 +27,11 @@
         {
           "name": "taskcontroller-1.0.0.jar",
           "url": "taskcontroller-1.0.0.jar",
-          "size": 35019,
-          "sha512": "2cfa63ca03de366fc0153296f5ad48395cfb7f2345f2e2dede8b9528c593ddd7208f1eac061fbc24fa750909697e231bc4899c2f7fe17be58b7af39df36cbabb",
-          "sha256": "7d550e80d098d7cee99e893e2f0437882da277073237acb8e1b7b39238739d03",
-          "sha1": "d2cf4d9561fd8bbea2d173571de27cc34d92cf9e",
-          "md5": "b90135a8dbeb8bd797af5bffc054b960"
+          "size": 35031,
+          "sha512": "69ec94c07672125d8d1b77857d0ef45cc140682fa09b469de3cc56e7e201f81caa391c91da838b3c24e76c133e8e685bbb7d252afc79deb7f2919fbcd494616b",
+          "sha256": "09f395ebc98ee14eeba43b1334e139bbf029d68cf831db68d8dba624c7512fd6",
+          "sha1": "b80aac79477ffcc5afdd39eafd8bcba4b982dbe3",
+          "md5": "1564d91bb1a41131ba4858fdad8c4117"
         }
       ]
     },
@@ -127,42 +127,42 @@
           "group": "org.openjfx",
           "module": "javafx-base",
           "version": {
-            "requires": "23.0.2"
+            "requires": "24.0.2"
           }
         },
         {
           "group": "org.openjfx",
           "module": "javafx-graphics",
           "version": {
-            "requires": "23.0.2"
+            "requires": "24.0.2"
           }
         },
         {
           "group": "org.openjfx",
           "module": "javafx-controls",
           "version": {
-            "requires": "23.0.2"
+            "requires": "24.0.2"
           }
         },
         {
           "group": "org.openjfx",
           "module": "javafx-fxml",
           "version": {
-            "requires": "23.0.2"
+            "requires": "24.0.2"
           }
         },
         {
           "group": "org.openjfx",
           "module": "javafx-swing",
           "version": {
-            "requires": "23.0.2"
+            "requires": "24.0.2"
           }
         },
         {
           "group": "org.openjfx",
           "module": "javafx-web",
           "version": {
-            "requires": "23.0.2"
+            "requires": "24.0.2"
           }
         }
       ],
@@ -170,11 +170,11 @@
         {
           "name": "taskcontroller-1.0.0.jar",
           "url": "taskcontroller-1.0.0.jar",
-          "size": 35019,
-          "sha512": "2cfa63ca03de366fc0153296f5ad48395cfb7f2345f2e2dede8b9528c593ddd7208f1eac061fbc24fa750909697e231bc4899c2f7fe17be58b7af39df36cbabb",
-          "sha256": "7d550e80d098d7cee99e893e2f0437882da277073237acb8e1b7b39238739d03",
-          "sha1": "d2cf4d9561fd8bbea2d173571de27cc34d92cf9e",
-          "md5": "b90135a8dbeb8bd797af5bffc054b960"
+          "size": 35031,
+          "sha512": "69ec94c07672125d8d1b77857d0ef45cc140682fa09b469de3cc56e7e201f81caa391c91da838b3c24e76c133e8e685bbb7d252afc79deb7f2919fbcd494616b",
+          "sha256": "09f395ebc98ee14eeba43b1334e139bbf029d68cf831db68d8dba624c7512fd6",
+          "sha1": "b80aac79477ffcc5afdd39eafd8bcba4b982dbe3",
+          "md5": "1564d91bb1a41131ba4858fdad8c4117"
         }
       ]
     }

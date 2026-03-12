@@ -73,8 +73,9 @@ public class CustomCSVExportModularTask extends AbstractTask implements Processe
           PeakMZType.class,
           MZRangeType.class,
           RIType.class,
-          RIMinType.class,
-          RIMaxType.class,
+          RIRangeType.class,
+          //RIMinType.class,
+          //RIMaxType.class,
           RIDiffType.class,
           HeightType.class,
           AreaType.class,
@@ -87,6 +88,7 @@ public class CustomCSVExportModularTask extends AbstractTask implements Processe
   );
   private final Map<Class<? extends DataType<?>>, List<Class<? extends DataType>>> rowSubtypes = Map.of(
           RTRangeType.class, List.of(RTRangeType.class, MZType.class),
+          RIRangeType.class, List.of(RIRangeType.class, MZType.class),
           MZRangeType.class, List.of(MZRangeType.class, MZType.class),
           IntensityRangeType.class, List.of(IntensityRangeType.class, MZType.class),
           SpectralLibraryMatchesType.class, List.of(CompoundNameType.class, MatchingSignalsType.class, SimilarityType.class, ExplainedIntensityPercentType.class, CommentType.class)
