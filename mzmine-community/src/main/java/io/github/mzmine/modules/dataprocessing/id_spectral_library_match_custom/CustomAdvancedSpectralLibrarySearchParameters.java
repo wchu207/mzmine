@@ -49,7 +49,7 @@ public class CustomAdvancedSpectralLibrarySearchParameters extends SimpleParamet
       new RTToleranceParameter());
 
   public static final OptionalParameter<RIToleranceParameter> riTolerance = new OptionalParameter<>(
-          new RIToleranceParameter("RI tolerance [±]", "Retention index tolerance for spectral library entries to be matched against a feature."));
+          new RIToleranceParameter("RI tolerance [±]", "Retention index tolerance for spectral library entries to be matched against a feature.", true));
 
   public static final BooleanParameter ignoreWithoutRI = new BooleanParameter("Ignore library entries without RIs", "");
 
