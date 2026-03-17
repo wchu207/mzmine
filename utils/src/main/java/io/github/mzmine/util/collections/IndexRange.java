@@ -30,10 +30,12 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 import java.util.function.IntConsumer;
+import java.util.stream.Collectors;
 import org.jetbrains.annotations.NotNull;
 
 public sealed interface IndexRange permits EmptyIndexRange, SimpleIndexRange, SingleIndexRange {
 
+  IndexRange EMPTY = new EmptyIndexRange();
 
   /**
    * Parse a string of ranges like "1,4-9,11,14-15" into a list of IndexRange objects.
@@ -75,6 +77,10 @@ public sealed interface IndexRange permits EmptyIndexRange, SimpleIndexRange, Si
       }
     }
     return ranges;
+  }
+
+  static String asString(@NotNull final List<@NotNull IndexRange> ranges) {
+    return ranges.stream().map(IndexRange::toString).collect(Collectors.joining(","));
   }
 
   static IndexRange ofSingleValue(int value) {
@@ -134,7 +140,7 @@ public sealed interface IndexRange permits EmptyIndexRange, SimpleIndexRange, Si
   @NotNull
   static IndexRange ofInclusive(int min, int maxInclusive) {
     if (maxInclusive < min || min == -1 || maxInclusive == -1) {
-      return EmptyIndexRange.INSTANCE;
+      return IndexRange.EMPTY;
     }
     if (maxInclusive == min) {
       return new SingleIndexRange(min);

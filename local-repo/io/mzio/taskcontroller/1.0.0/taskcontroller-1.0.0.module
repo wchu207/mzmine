@@ -10,7 +10,7 @@
   },
   "createdBy": {
     "gradle": {
-      "version": "8.10"
+      "version": "9.1.0"
     }
   },
   "variants": [
@@ -19,7 +19,7 @@
       "attributes": {
         "org.gradle.category": "library",
         "org.gradle.dependency.bundling": "external",
-        "org.gradle.jvm.version": 23,
+        "org.gradle.jvm.version": 25,
         "org.gradle.libraryelements": "jar",
         "org.gradle.usage": "java-api"
       },
@@ -27,11 +27,11 @@
         {
           "name": "taskcontroller-1.0.0.jar",
           "url": "taskcontroller-1.0.0.jar",
-          "size": 34980,
-          "sha512": "2ed05f05a5d5b78639013dea11daee570288c226b0481d6b04b006f5090657861fb14dda2630b6cff66c3841cc9c22e7e4c21885d8742e8c23d2c39ce02fd6e5",
-          "sha256": "8b08b4315dd5c844a6220c9ae638f619a1ecc92d085bb6b97fc3c67c42e62b74",
-          "sha1": "7bcb5b600b9454b5cb72255110b261c276011eb5",
-          "md5": "cec237243d481d88d71fdc8cbcff8c72"
+          "size": 35031,
+          "sha512": "69ec94c07672125d8d1b77857d0ef45cc140682fa09b469de3cc56e7e201f81caa391c91da838b3c24e76c133e8e685bbb7d252afc79deb7f2919fbcd494616b",
+          "sha256": "09f395ebc98ee14eeba43b1334e139bbf029d68cf831db68d8dba624c7512fd6",
+          "sha1": "b80aac79477ffcc5afdd39eafd8bcba4b982dbe3",
+          "md5": "1564d91bb1a41131ba4858fdad8c4117"
         }
       ]
     },
@@ -40,7 +40,7 @@
       "attributes": {
         "org.gradle.category": "library",
         "org.gradle.dependency.bundling": "external",
-        "org.gradle.jvm.version": 23,
+        "org.gradle.jvm.version": 25,
         "org.gradle.libraryelements": "jar",
         "org.gradle.usage": "java-runtime"
       },
@@ -56,7 +56,7 @@
           "group": "org.controlsfx",
           "module": "controlsfx",
           "version": {
-            "requires": "11.1.1"
+            "requires": "11.2.2"
           }
         },
         {
@@ -102,6 +102,13 @@
           }
         },
         {
+          "group": "io.mzio",
+          "module": "user-client",
+          "version": {
+            "requires": "1.0.0"
+          }
+        },
+        {
           "group": "io.github.mzmine",
           "module": "utils"
         },
@@ -120,42 +127,42 @@
           "group": "org.openjfx",
           "module": "javafx-base",
           "version": {
-            "requires": "23.0.2"
+            "requires": "24.0.2"
           }
         },
         {
           "group": "org.openjfx",
           "module": "javafx-graphics",
           "version": {
-            "requires": "23.0.2"
+            "requires": "24.0.2"
           }
         },
         {
           "group": "org.openjfx",
           "module": "javafx-controls",
           "version": {
-            "requires": "23.0.2"
+            "requires": "24.0.2"
           }
         },
         {
           "group": "org.openjfx",
           "module": "javafx-fxml",
           "version": {
-            "requires": "23.0.2"
+            "requires": "24.0.2"
           }
         },
         {
           "group": "org.openjfx",
           "module": "javafx-swing",
           "version": {
-            "requires": "23.0.2"
+            "requires": "24.0.2"
           }
         },
         {
           "group": "org.openjfx",
           "module": "javafx-web",
           "version": {
-            "requires": "23.0.2"
+            "requires": "24.0.2"
           }
         }
       ],
@@ -163,11 +170,11 @@
         {
           "name": "taskcontroller-1.0.0.jar",
           "url": "taskcontroller-1.0.0.jar",
-          "size": 34980,
-          "sha512": "2ed05f05a5d5b78639013dea11daee570288c226b0481d6b04b006f5090657861fb14dda2630b6cff66c3841cc9c22e7e4c21885d8742e8c23d2c39ce02fd6e5",
-          "sha256": "8b08b4315dd5c844a6220c9ae638f619a1ecc92d085bb6b97fc3c67c42e62b74",
-          "sha1": "7bcb5b600b9454b5cb72255110b261c276011eb5",
-          "md5": "cec237243d481d88d71fdc8cbcff8c72"
+          "size": 35031,
+          "sha512": "69ec94c07672125d8d1b77857d0ef45cc140682fa09b469de3cc56e7e201f81caa391c91da838b3c24e76c133e8e685bbb7d252afc79deb7f2919fbcd494616b",
+          "sha256": "09f395ebc98ee14eeba43b1334e139bbf029d68cf831db68d8dba624c7512fd6",
+          "sha1": "b80aac79477ffcc5afdd39eafd8bcba4b982dbe3",
+          "md5": "1564d91bb1a41131ba4858fdad8c4117"
         }
       ]
     }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2004-2024 The mzmine Development Team
+ * Copyright (c) 2004-2026 The mzmine Development Team
  *
  * Permission is hereby granted, free of charge, to any person
  * obtaining a copy of this software and associated documentation
@@ -25,6 +25,8 @@
 
 package io.github.mzmine.util;
 
+import static io.github.mzmine.util.StringUtils.inQuotes;
+
 import com.opencsv.CSVReader;
 import com.opencsv.CSVReaderBuilder;
 import com.opencsv.CSVWriterBuilder;
@@ -44,9 +46,6 @@ import io.github.mzmine.modules.dataprocessing.id_localcsvsearch.HandleExtraColu
 import io.github.mzmine.parameters.parametertypes.ImportType;
 import io.github.mzmine.parameters.parametertypes.combowithinput.ComboWithStringInputValue;
 import io.github.mzmine.taskcontrol.TaskStatus;
-
-import static io.github.mzmine.util.StringUtils.inQuotes;
-
 import io.github.mzmine.util.exceptions.MissingColumnException;
 import io.github.mzmine.util.files.FileAndPathUtil;
 import io.github.mzmine.util.io.CSVUtils;
@@ -164,6 +163,7 @@ public class CSVParsingUtils {
                 () -> "Library file contains two columns called \"" + columnName + "\".");
           }
           importType.setColumnIndex(i);
+          importType.setCsvColumnName(columnName); // need to set to the specific upper/lower case for getCompoundFromLine
         }
       }
     }
@@ -490,7 +490,7 @@ public class CSVParsingUtils {
       @NotNull String[] values, @NotNull List<ImportType<?>> linesWithIndices,
       @NotNull final ExtraColumnHandler extraColumnHandler) {
 
-    final Map<@NotNull String, @Nullable String> data = new HashMap<>(csvHeaders.length, 1f);
+    final Map<@NotNull String, @Nullable String> data = HashMap.newHashMap(csvHeaders.length);
     for (int i = 0; i < csvHeaders.length; i++) {
       data.put(csvHeaders[i], values[i]);
     }
@@ -530,6 +530,7 @@ public class CSVParsingUtils {
       }
     }
 
+    a.enrichMetadata();
     return a;
   }
 
