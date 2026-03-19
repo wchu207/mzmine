@@ -33,7 +33,6 @@ import io.github.mzmine.modules.MZmineModule;
 import io.github.mzmine.modules.dataprocessing.align_common.BaseFeatureListAligner;
 import io.github.mzmine.modules.dataprocessing.align_common.FeatureCloner;
 import io.github.mzmine.modules.dataprocessing.align_common.FeatureCloner.SimpleFeatureCloner;
-import io.github.mzmine.modules.dataprocessing.align_ri.RIRowAlignScorer;
 import io.github.mzmine.modules.dataprocessing.featdet_spectraldeconvolutiongc.SpectralDeconvolutionGCModule;
 import io.github.mzmine.modules.dataprocessing.id_spectral_library_match.AdvancedSpectralLibrarySearchParameters;
 import io.github.mzmine.parameters.ParameterSet;
@@ -75,7 +74,6 @@ public class GCAlignerTask extends AbstractFeatureListTask {
 
     featureLists = Arrays.stream(
             parameters.getValue(GCAlignerParameters.FEATURE_LISTS).getMatchingFeatureLists())
-        .sorted(Comparator.comparing(ModularFeatureList::toString))
         .map(flist -> (FeatureList) flist).toList();
 
     this.parameters = parameters;
@@ -112,7 +110,12 @@ public class GCAlignerTask extends AbstractFeatureListTask {
     var rowAligner = new GcRowAlignScorer(parameters);
 
     var riWeight = parameters.getValue(GCAlignerParameters.RI_WEIGHT);
-    if (riWeight > 0) {
+    var rtWeight = parameters.getValue(GCAlignerParameters.RT_WEIGHT);
+    boolean usingRI = parameters.getValue(GCAlignerParameters.OPTIONAL_RI_TOLERANCE) && riWeight > 0;
+
+    if (usingRI && rtWeight > 0f) {
+      throw new RuntimeException("Attempted to run GCAlignerModule with both retention time and retention index criteria");
+    } else if (usingRI) {
       listAligner = new BaseFeatureListAligner(this, featureLists, featureListName,
           getMemoryMapStorage(), rowAligner, featureCloner, FeatureListRowSorter.DEFAULT_RI,
           postProcessor);
