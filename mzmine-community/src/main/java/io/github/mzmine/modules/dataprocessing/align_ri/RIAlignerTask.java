@@ -78,7 +78,6 @@ public class RIAlignerTask extends AbstractFeatureListTask {
 
     featureLists = Arrays.stream(
             parameters.getValue(RIAlignerParameters.FEATURE_LISTS).getMatchingFeatureLists())
-        .sorted(Comparator.comparing(ModularFeatureList::toString))
         .map(flist -> (FeatureList) flist).toList();
 
     this.parameters = parameters;
